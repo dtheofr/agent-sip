@@ -3,9 +3,12 @@
 Env var for a key is ``AGENT_SIP_<SECTION>_<KEY>`` (e.g. ``AGENT_SIP_SIP_PORT``).
 """
 import dataclasses
+import json
 import os
+import typing
 import tomllib
 from dataclasses import dataclass, field
+from typing import Any
 from pathlib import Path
 
 ENV_PREFIX = "AGENT_SIP"
@@ -46,13 +49,20 @@ class SttConfig:
     model: str = "whisper-1"
     language: str = ""       # e.g. "en"; empty = auto-detect
     timeout: float = 30.0
+    extra: dict[str, Any] = field(default_factory=dict)  # custom form fields (temperature, prompt...)
 
 
 @dataclass
-class DemoConfig:
-    prompt_file: str = "assets/prompt.wav"
-    record_dir: str = "recordings"
-    playback_recording: bool = True
+class TtsConfig:
+    """OpenAI-shaped speech API (POST {base_url}/audio/speech)."""
+    base_url: str = "http://localhost:8001/v1"
+    api_key: str = ""
+    model: str = "tts-1"
+    voice: str = "alloy"
+    response_format: str = "wav"   # wav (recommended), pcm, or anything ffmpeg can read
+    pcm_sample_rate: int = 24000   # only used when the server returns raw pcm
+    timeout: float = 60.0
+    extra: dict[str, Any] = field(default_factory=dict)  # custom JSON fields (speed, instructions...)
 
 
 @dataclass
@@ -60,11 +70,13 @@ class Config:
     sip: SipConfig = field(default_factory=SipConfig)
     audio: AudioConfig = field(default_factory=AudioConfig)
     stt: SttConfig = field(default_factory=SttConfig)
-    demo: DemoConfig = field(default_factory=DemoConfig)
+    tts: TtsConfig = field(default_factory=TtsConfig)
     phones: list[PhoneConfig] = field(default_factory=list)  # [[phones]] tables; no env override
 
 
 def _coerce(raw, typ):
+    if typing.get_origin(typ) is dict:
+        return raw if isinstance(raw, dict) else json.loads(raw)
     if typ is bool:
         if isinstance(raw, bool):
             return raw

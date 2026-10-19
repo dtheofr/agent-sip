@@ -4,5 +4,3 @@ __pycache__/
 recordings/
 config.toml
 .env
-assets/*.wav
-assets/*.mp3

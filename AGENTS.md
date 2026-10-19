@@ -9,7 +9,7 @@ Guidance for coding agents working on agent-sip.
 - `src/agent_sip/audio/` — shared helpers. Internal audio format is always **8 kHz mono int16 `array('h')`**.
 - `stt/`, `tts/`, `agent/` — each exposes a small `Protocol` in `base.py`; implementations are added alongside.
   TTS must work with any OpenAI-shaped API (configurable base_url/api_key/model/voice).
-- `demo.py` — reference handler; `__main__.py` — CLI wiring only.
+- `echo.py` — reference handler (STT → TTS echo); `__main__.py` — CLI wiring only.
 - `config.py` — dataclasses; TOML < env (`AGENT_SIP_<SECTION>_<KEY>`). Add new keys to
   the dataclass **and** `config.example.toml`.
 - `examples/poc_sip.py` — original single-file proof of concept, kept for reference only.

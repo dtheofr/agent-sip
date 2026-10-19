@@ -29,8 +29,14 @@ api_key = ""             # or AGENT_SIP_STT_API_KEY
 model = "whisper-1"
 language = ""            # empty = auto-detect
 timeout = 30.0
+extra = {}               # custom form fields, e.g. { temperature = 0.2, prompt = "..." }
 
-[demo]                   # built-in demo handler (prompt, beep, record, replay)
-prompt_file = "assets/prompt.wav"
-record_dir = "recordings"
-playback_recording = true
+[tts]                    # remote OpenAI-shaped text-to-speech
+base_url = "http://localhost:8001/v1"
+api_key = ""             # or AGENT_SIP_TTS_API_KEY
+model = "tts-1"
+voice = "alloy"
+response_format = "wav"  # wav recommended; pcm needs pcm_sample_rate
+pcm_sample_rate = 24000
+timeout = 60.0
+extra = {}               # custom JSON fields, e.g. { speed = 1.1 }

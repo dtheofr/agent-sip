@@ -4,14 +4,16 @@ import logging
 import os
 
 from .config import load_config
-from .demo import DemoHandler
+from .echo import EchoHandler
 from .sip import SipServer
 from .stt import OpenAITranscriber
+from .tts import OpenAISynthesizer
 
 
 async def run(args) -> None:
     cfg = load_config(args.config)
-    server = SipServer(cfg.sip, DemoHandler(cfg.demo, cfg.audio, OpenAITranscriber(cfg.stt)), cfg.phones)
+    server = SipServer(cfg.sip, EchoHandler(cfg.audio, OpenAITranscriber(cfg.stt),
+                                       OpenAISynthesizer(cfg.tts)), cfg.phones)
     await server.start()
     print(f"Ready on {server.local_ip}:{cfg.sip.port}. Lift the handset! (Ctrl+C to quit)")
     try:

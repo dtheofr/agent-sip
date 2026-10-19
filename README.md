@@ -9,16 +9,16 @@ Pipeline (target): `phone ⇄ SIP/RTP ⇄ STT → Agent → TTS ⇄ phone`
 | `agent_sip.sip`    | working | SIP signalling + RTP (G.711 µ-law), multi-call, no app logic |
 | `agent_sip.audio`  | working | 8 kHz PCM helpers: load/save, beep, silence-based recorder |
 | `agent_sip.stt`    | working | `Transcriber` protocol + remote OpenAI-shaped client (`[stt]` config); local faster-whisper possible later |
-| `agent_sip.tts`    | stub    | `Synthesizer` protocol (any OpenAI-shaped `/v1/audio/speech`) |
+| `agent_sip.tts`    | working | `Synthesizer` protocol + OpenAI-shaped `/audio/speech` client (`[tts]` config) |
 | `agent_sip.agent`  | stub    | `Agent` protocol |
-| `agent_sip.demo`   | working | Port of `examples/poc_sip.py`: prompt → beep → record → replay |
+| `agent_sip.echo`   | working | Demo handler: listen → STT → TTS → repeat until hangup |
 
-Pure standard library for now (Python ≥ 3.11, `ffmpeg` optional for loading non-8 kHz audio).
+Pure standard library (Python ≥ 3.11). `ffmpeg` is only needed if the TTS returns something other than wav/pcm.
 
 ## Quick start
 
 ```sh
-cp assets/your_prompt.wav assets/prompt.wav   # any format if ffmpeg is installed
+# edit config.toml: [[phones]], [stt], [tts] (needs reachable STT and TTS servers)
 make run          # creates .venv, config.toml (from config.example.toml), starts the server
 make test         # unit + loopback call-flow tests
 make help
@@ -32,6 +32,9 @@ the phone/ATA's SIP proxy/dial plan at this machine.
 `config.toml` (see `config.example.toml`), overridden by env vars
 `AGENT_SIP_<SECTION>_<KEY>`, e.g. `AGENT_SIP_SIP_PORT=5080`.
 `sip.local_ip` is auto-detected when empty.
+`[stt]` and `[tts]` accept an `extra` table of custom parameters merged into the request
+(form fields for STT, JSON body for TTS), e.g. `extra = { speed = 1.1 }`; via env, pass JSON:
+`AGENT_SIP_TTS_EXTRA='{"speed":1.1}'`.
 Phones are declared as repeated `[[phones]]` tables (name, ip, port, user); these are TOML-only.
 
 ## Writing your own behaviour

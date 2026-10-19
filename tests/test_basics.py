@@ -35,7 +35,7 @@ class Sip(unittest.TestCase):
 class Config(unittest.TestCase):
     def test_toml_and_env(self):
         with tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False) as f:
-            f.write("[sip]\nport = 5070\n[demo]\nplayback_recording = false\n"
+            f.write("[sip]\nport = 5070\n[stt]\nextra = { temperature = 0.2 }\n"
                     '[[phones]]\nname = "a"\nip = "1.1.1.1"\n[[phones]]\nname = "b"\nip = "2.2.2.2"\n')
         try:
             cfg = load_config(f.name, env={"AGENT_SIP_SIP_LOCAL_IP": "9.9.9.9"})
@@ -44,7 +44,7 @@ class Config(unittest.TestCase):
         self.assertEqual(cfg.sip.port, 5070)
         self.assertEqual(cfg.sip.local_ip, "9.9.9.9")
         self.assertEqual([(p.name, p.ip) for p in cfg.phones], [("a", "1.1.1.1"), ("b", "2.2.2.2")])
-        self.assertFalse(cfg.demo.playback_recording)
+        self.assertEqual(cfg.stt.extra, {"temperature": 0.2})
 
 
 if __name__ == "__main__":

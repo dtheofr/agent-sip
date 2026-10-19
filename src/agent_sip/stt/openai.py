@@ -40,6 +40,9 @@ class OpenAITranscriber:
         fields = {"model": self.cfg.model, "response_format": "json"}
         if self.cfg.language:
             fields["language"] = self.cfg.language
+        for k, v in self.cfg.extra.items():
+            fields[k] = (json.dumps(v) if isinstance(v, (dict, list))
+                         else str(v).lower() if isinstance(v, bool) else str(v))
         body, ctype = _multipart(fields, "audio.wav", wav)
         headers = {"Content-Type": ctype}
         if self.cfg.api_key:
