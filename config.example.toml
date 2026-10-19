@@ -1,0 +1,36 @@
+# Copy to config.toml. Any value can be overridden by an env var named
+# AGENT_SIP_<SECTION>_<KEY>, e.g. AGENT_SIP_SIP_PORT=5080.
+
+[sip]
+local_ip = ""            # our IP as seen by the phone; empty = auto-detect
+bind_host = "0.0.0.0"
+port = 5060
+rtp_port_min = 10000     # one even RTP port is allocated per call
+rtp_port_max = 10100
+local_user = "agent"     # user part of our SIP URI
+
+# Known phones (repeat the table for more). Incoming calls from `ip` get
+# call.phone = name; SipServer.originate("name") rings one.
+[[phones]]
+name = "socotel"
+ip = "192.168.1.0"
+port = 5060
+user = "socotel"
+
+[audio]
+speech_threshold = 500   # RMS (0-32767) above which a frame is "speech"
+silence_end = 1.5        # seconds of silence after speech => stop recording
+no_speech_timeout = 8.0  # give up if nothing is said within this time
+max_record = 20.0        # hard limit in seconds
+
+[stt]                    # remote OpenAI-shaped speech-to-text
+base_url = "http://localhost:8000/v1"
+api_key = ""             # or AGENT_SIP_STT_API_KEY
+model = "whisper-1"
+language = ""            # empty = auto-detect
+timeout = 30.0
+
+[demo]                   # built-in demo handler (prompt, beep, record, replay)
+prompt_file = "assets/prompt.wav"
+record_dir = "recordings"
+playback_recording = true
