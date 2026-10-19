@@ -66,11 +66,24 @@ class TtsConfig:
 
 
 @dataclass
+class LlmConfig:
+    """OpenAI-shaped chat API (POST {base_url}/chat/completions)."""
+    base_url: str = "http://localhost:8002/api/v1"
+    api_key: str = ""
+    model: str = "gpt-4o-mini"
+    system_prompt_file: str = "prompts/system.md"   # external file; empty = no system prompt
+    greeting: str = "Hello! How can I help?"        # spoken on pickup; empty = silent
+    timeout: float = 60.0
+    extra: dict[str, Any] = field(default_factory=dict)  # custom JSON fields (temperature...)
+
+
+@dataclass
 class Config:
     sip: SipConfig = field(default_factory=SipConfig)
     audio: AudioConfig = field(default_factory=AudioConfig)
     stt: SttConfig = field(default_factory=SttConfig)
     tts: TtsConfig = field(default_factory=TtsConfig)
+    llm: LlmConfig = field(default_factory=LlmConfig)
     phones: list[PhoneConfig] = field(default_factory=list)  # [[phones]] tables; no env override
 
 

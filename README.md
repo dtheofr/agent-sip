@@ -10,7 +10,8 @@ Pipeline (target): `phone ⇄ SIP/RTP ⇄ STT → Agent → TTS ⇄ phone`
 | `agent_sip.audio`  | working | 8 kHz PCM helpers: load/save, beep, silence-based recorder |
 | `agent_sip.stt`    | working | `Transcriber` protocol + remote OpenAI-shaped client (`[stt]` config); local faster-whisper possible later |
 | `agent_sip.tts`    | working | `Synthesizer` protocol + OpenAI-shaped `/audio/speech` client (`[tts]` config) |
-| `agent_sip.agent`  | stub    | `Agent` protocol |
+| `agent_sip.agent`  | working | `Agent` protocol + OpenAI-shaped `/chat/completions` client (`[llm]`, system prompt in `prompts/system.md`) |
+| `agent_sip.assistant` | working | Main handler: listen → STT → agent → TTS, history per call |
 | `agent_sip.echo`   | working | Demo handler: listen → STT → TTS → repeat until hangup |
 
 Pure standard library (Python ≥ 3.11). `ffmpeg` is only needed if the TTS returns something other than wav/pcm.

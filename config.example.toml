@@ -40,3 +40,12 @@ response_format = "wav"  # wav recommended; pcm needs pcm_sample_rate
 pcm_sample_rate = 24000
 timeout = 60.0
 extra = {}               # custom JSON fields, e.g. { speed = 1.1 }
+
+[llm]                    # remote OpenAI-shaped chat completions
+base_url = "http://localhost:8002/api/v1"   # we POST to {base_url}/chat/completions
+api_key = ""             # or AGENT_SIP_LLM_API_KEY
+model = "gpt-4o-mini"
+system_prompt_file = "prompts/system.md"    # edit this file to change the agent's behaviour
+greeting = "Hello! How can I help?"         # spoken when the handset is lifted; "" = none
+timeout = 60.0
+extra = {}               # custom JSON fields, e.g. { temperature = 0.7, max_tokens = 200 }
