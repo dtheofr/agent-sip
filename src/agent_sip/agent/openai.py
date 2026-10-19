@@ -1,12 +1,21 @@
 """Agent backed by any OpenAI-shaped POST {base_url}/chat/completions endpoint (stdlib only)."""
 import asyncio
 import json
+import logging
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 
 from ..config import LlmConfig
 from .tools import ToolRegistry, registry
+
+log = logging.getLogger(__name__)
+
+
+def _short(x, n=80) -> str:
+    x = str(x).replace("\n", " ")
+    return x if len(x) <= n else x[:n] + "…"
 
 
 def load_system_prompt(path: str) -> str:
@@ -54,7 +63,11 @@ class OpenAIChatAgent:
                              "tool_calls": calls})
             for c in calls:
                 fn = c["function"]
+                t0 = time.monotonic()
                 result = await self.tools.call(fn["name"], fn.get("arguments"))
+                log.info("tool %s(%s) in %.0f ms -> %s", fn["name"],
+                         _short(fn.get("arguments") or ""), (time.monotonic() - t0) * 1000,
+                         _short(result))
                 messages.append({"role": "tool", "tool_call_id": c["id"], "content": result})
         else:
             raise RuntimeError("too many tool-call rounds")
