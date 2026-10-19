@@ -2,6 +2,8 @@ PY ?= python3
 VENV ?= .venv
 BIN := $(VENV)/bin
 
+SILERO_URL ?= https://github.com/snakers4/silero-vad/raw/v5.1.2/src/silero_vad/data/silero_vad.onnx
+
 .PHONY: help install run test lint clean
 
 help:  ## Show this help
@@ -10,8 +12,12 @@ help:  ## Show this help
 $(BIN)/pip:
 	$(PY) -m venv $(VENV)
 
-install: $(BIN)/pip  ## Create venv and install the project (editable)
-	$(BIN)/python -m pip install -e ".[dev]"
+models/silero_vad.onnx:
+	mkdir -p models
+	curl -fsSL -o $@.tmp $(SILERO_URL) && mv $@.tmp $@
+
+install: $(BIN)/pip models/silero_vad.onnx  ## Create venv, install the project (+VAD deps) and fetch the Silero model
+	$(BIN)/python -m pip install -e ".[dev,vad]"
 
 config.toml:
 	cp config.example.toml config.toml

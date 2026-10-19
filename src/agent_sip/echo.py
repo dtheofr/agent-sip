@@ -1,7 +1,7 @@
 """Echo handler: listen, transcribe, repeat with TTS, until the caller hangs up."""
 import logging
 
-from .audio import record_until_silence
+from .audio import make_vad, play_interruptible, record_until_silence
 from .config import AudioConfig
 from .sip import Call, CallHandler
 from .stt import Transcriber
@@ -17,14 +17,17 @@ class EchoHandler(CallHandler):
     async def on_call(self, call: Call) -> None:
         tag = call.call_id[:8]
         log.info("[%s] echo session started", tag)
+        vad = make_vad(self.audio)
+        barged = None
         while call.active:
             pcm, heard = await record_until_silence(
-                call,
-                speech_threshold=self.audio.speech_threshold,
+                call, vad,
+                prefix=barged,
                 silence_end=self.audio.silence_end,
                 no_speech_timeout=self.audio.no_speech_timeout,
                 max_record=self.audio.max_record,
             )
+            barged = None
             if not heard:
                 continue                      # keep waiting for the caller
             try:
@@ -36,4 +39,8 @@ class EchoHandler(CallHandler):
             except Exception:
                 log.exception("[%s] STT/TTS failed", tag)
                 continue
-            await call.play(speech)
+            if self.audio.barge_in:
+                barged = await play_interruptible(
+                    call, speech, vad, min_speech=self.audio.barge_in_min_speech)
+            else:
+                await call.play(speech)

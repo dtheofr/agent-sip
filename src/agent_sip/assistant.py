@@ -1,9 +1,10 @@
 """Assistant handler: listen -> STT -> agent (LLM) -> TTS, one conversation per call."""
+import array
 import logging
 from collections.abc import Callable
 
 from .agent import Agent
-from .audio import record_until_silence
+from .audio import make_vad, play_interruptible, record_until_silence
 from .config import AudioConfig
 from .sip import Call, CallHandler
 from .stt import Transcriber
@@ -21,17 +22,20 @@ class AssistantHandler(CallHandler):
     async def on_call(self, call: Call) -> None:
         tag = call.call_id[:8]
         agent = self.agent_factory()          # fresh history for every call
+        vad = make_vad(self.audio)            # stateful: one per call
         log.info("[%s] assistant session started", tag)
+        barged = None                         # caller audio captured by a barge-in
         if self.greeting:
-            await self._say(call, self.greeting, tag)
+            barged = await self._say(call, vad, self.greeting, tag)
         while call.active:
             pcm, heard = await record_until_silence(
-                call,
-                speech_threshold=self.audio.speech_threshold,
+                call, vad,
                 silence_end=self.audio.silence_end,
                 no_speech_timeout=self.audio.no_speech_timeout,
                 max_record=self.audio.max_record,
+                prefix=barged,
             )
+            barged = None
             if not heard:
                 continue
             try:
@@ -45,10 +49,20 @@ class AssistantHandler(CallHandler):
                 log.exception("[%s] STT/agent failed", tag)
                 continue
             if reply:
-                await self._say(call, reply, tag)
+                barged = await self._say(call, vad, reply, tag)
 
-    async def _say(self, call: Call, text: str, tag: str) -> None:
+    async def _say(self, call: Call, vad, text: str, tag: str) -> array.array | None:
+        """Speak ``text``. Returns the caller's audio if they interrupted, else None."""
         try:
-            await call.play(await self.tts.synthesize(text))
+            pcm = await self.tts.synthesize(text)
+            if not self.audio.barge_in:
+                await call.play(pcm)
+                return None
+            captured = await play_interruptible(
+                call, pcm, vad, min_speech=self.audio.barge_in_min_speech)
+            if captured is not None:
+                log.info("[%s] caller interrupted the agent", tag)
+            return captured
         except Exception:
             log.exception("[%s] TTS failed", tag)
+            return None

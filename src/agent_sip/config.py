@@ -35,7 +35,12 @@ class PhoneConfig:
 
 @dataclass
 class AudioConfig:
-    speech_threshold: float = 500
+    vad: str = "silero"             # "silero" (needs the [vad] extra, `make install`) or "energy"
+    speech_threshold: float = 500   # energy VAD: RMS above which a frame is speech
+    vad_threshold: float = 0.5      # silero VAD: speech probability threshold
+    silero_model: str = "models/silero_vad.onnx"  # fetched by `make install`
+    barge_in: bool = True           # caller can interrupt the agent while it is speaking
+    barge_in_min_speech: float = 0.3  # seconds of continuous speech needed to interrupt
     silence_end: float = 1.5
     no_speech_timeout: float = 8.0
     max_record: float = 20.0

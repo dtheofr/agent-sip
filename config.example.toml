@@ -18,8 +18,13 @@ port = 5060
 user = "socotel"
 
 [audio]
-speech_threshold = 500   # RMS (0-32767) above which a frame is "speech"
-silence_end = 1.5        # seconds of silence after speech => stop recording
+vad = "silero"          # "silero" (neural, installed by `make install`) or "energy" (RMS threshold)
+speech_threshold = 500   # energy VAD: RMS (0-32767) above which a frame is "speech"
+vad_threshold = 0.5      # silero VAD: speech probability above which a frame is "speech"
+silero_model = "models/silero_vad.onnx"   # downloaded by `make install`
+barge_in = true         # let the caller interrupt the agent while it is speaking
+barge_in_min_speech = 0.3  # seconds of continuous speech needed to interrupt
+silence_end = 1.5        # seconds of VAD silence after speech => end of turn
 no_speech_timeout = 8.0  # give up if nothing is said within this time
 max_record = 20.0        # hard limit in seconds
 

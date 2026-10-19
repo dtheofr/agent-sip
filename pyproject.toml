@@ -8,6 +8,7 @@ dependencies = []          # core SIP/RTP is stdlib only
 
 [project.optional-dependencies]
 stt = ["faster-whisper"]   # planned
+vad = ["onnxruntime", "numpy"]   # Silero VAD (model file is fetched by `make install`)
 dev = ["ruff"]
 
 [project.scripts]
