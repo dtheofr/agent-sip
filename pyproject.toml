@@ -1,0 +1,25 @@
+[project]
+name = "agent-sip"
+version = "0.1.0"
+description = "Talk to one or many AI agents from a phone through SIP"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []          # core SIP/RTP is stdlib only
+
+[project.optional-dependencies]
+stt = ["faster-whisper"]   # planned
+dev = ["ruff"]
+
+[project.scripts]
+agent-sip = "agent_sip.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]

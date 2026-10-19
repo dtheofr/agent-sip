@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.egg-info/
+recordings/
+config.toml
+.env
+assets/*.wav
+assets/*.mp3
