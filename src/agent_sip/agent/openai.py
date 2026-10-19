@@ -6,6 +6,7 @@ import urllib.request
 from pathlib import Path
 
 from ..config import LlmConfig
+from .tools import ToolRegistry, registry
 
 
 def load_system_prompt(path: str) -> str:
@@ -15,14 +16,20 @@ def load_system_prompt(path: str) -> str:
 class OpenAIChatAgent:
     """One instance = one conversation (keeps history). Create one per call."""
 
-    def __init__(self, cfg: LlmConfig, system_prompt: str = "") -> None:
+    MAX_TOOL_ROUNDS = 5
+
+    def __init__(self, cfg: LlmConfig, system_prompt: str = "",
+                 tools: ToolRegistry | None = None) -> None:
         self.cfg = cfg
+        self.tools = registry if tools is None else tools
         self.messages: list[dict] = []
         if system_prompt:
             self.messages.append({"role": "system", "content": system_prompt})
 
-    def _request(self, messages: list[dict]) -> str:
+    def _request(self, messages: list[dict]) -> dict:
         payload = {"model": self.cfg.model, "messages": messages}
+        if self.tools:
+            payload["tools"] = self.tools.specs()
         payload.update(self.cfg.extra)          # custom params win
         headers = {"Content-Type": "application/json"}
         if self.cfg.api_key:
@@ -34,11 +41,24 @@ class OpenAIChatAgent:
                 data = json.load(resp)
         except urllib.error.HTTPError as e:
             raise RuntimeError(f"LLM HTTP {e.code}: {e.read()[:200]!r}") from e
-        return (data["choices"][0]["message"].get("content") or "").strip()
+        return data["choices"][0]["message"]
 
     async def respond(self, text: str) -> str:
         messages = self.messages + [{"role": "user", "content": text}]
-        reply = await asyncio.to_thread(self._request, messages)
+        for _ in range(self.MAX_TOOL_ROUNDS + 1):
+            msg = await asyncio.to_thread(self._request, messages)
+            calls = msg.get("tool_calls")
+            if not calls:
+                break
+            messages.append({"role": "assistant", "content": msg.get("content"),
+                             "tool_calls": calls})
+            for c in calls:
+                fn = c["function"]
+                result = await self.tools.call(fn["name"], fn.get("arguments"))
+                messages.append({"role": "tool", "tool_call_id": c["id"], "content": result})
+        else:
+            raise RuntimeError("too many tool-call rounds")
+        reply = (msg.get("content") or "").strip()
         # only commit the turn once it succeeded, so a failure leaves history consistent
         self.messages = messages + [{"role": "assistant", "content": reply}]
         return reply

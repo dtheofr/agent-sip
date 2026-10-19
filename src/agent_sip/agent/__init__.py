@@ -2,5 +2,7 @@
 
 from .base import Agent
 from .openai import OpenAIChatAgent, load_system_prompt
+from .tools import Tool, ToolRegistry, registry, tool
 
-__all__ = ["Agent", "OpenAIChatAgent", "load_system_prompt"]
+__all__ = ["Agent", "OpenAIChatAgent", "load_system_prompt",
+           "Tool", "ToolRegistry", "registry", "tool"]
