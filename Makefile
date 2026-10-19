@@ -7,11 +7,11 @@ BIN := $(VENV)/bin
 help:  ## Show this help
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
-$(BIN)/python:
+$(BIN)/pip:
 	$(PY) -m venv $(VENV)
 
-install: $(BIN)/python  ## Create venv and install the project (editable)
-	$(BIN)/pip install -e ".[dev]"
+install: $(BIN)/pip  ## Create venv and install the project (editable)
+	$(BIN)/python -m pip install -e ".[dev]"
 
 config.toml:
 	cp config.example.toml config.toml

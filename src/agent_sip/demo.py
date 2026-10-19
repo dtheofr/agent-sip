@@ -7,16 +7,18 @@ from datetime import datetime
 from .audio import load_audio, make_beep, record_until_silence, save_wav
 from .audio.recorder import duration
 from .config import AudioConfig, DemoConfig
+from .stt import Transcriber
 from .sip import Call, CallHandler
 
 log = logging.getLogger(__name__)
 
 
 class DemoHandler(CallHandler):
-    def __init__(self, demo: DemoConfig, audio: AudioConfig) -> None:
+    def __init__(self, demo: DemoConfig, audio: AudioConfig,
+                 transcriber: Transcriber | None = None) -> None:
         if not os.path.exists(demo.prompt_file):
             raise FileNotFoundError(f"Prompt file not found: {demo.prompt_file}")
-        self.demo, self.audio = demo, audio
+        self.demo, self.audio, self.stt = demo, audio, transcriber
         self.prompt = load_audio(demo.prompt_file)
         self.beep = make_beep()
         log.info("Prompt loaded: %.1fs", duration(self.prompt))
@@ -44,6 +46,13 @@ class DemoHandler(CallHandler):
                             datetime.now().strftime("rec_%Y%m%d_%H%M%S.wav"))
         save_wav(path, pcm)
         log.info("saved %s (%.1fs)", path, duration(pcm))
+
+        if self.stt:
+            try:
+                text = await self.stt.transcribe(pcm)
+                log.info("[%s] caller said: %r", call.call_id[:8], text)
+            except Exception:
+                log.exception("transcription failed")
 
         if self.demo.playback_recording:
             await asyncio.sleep(0.3)
