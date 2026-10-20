@@ -1,12 +1,16 @@
 """Configuration: defaults < TOML file < environment variables.
 
-Env var for a key is ``AGENT_SIP_<SECTION>_<KEY>`` (e.g. ``AGENT_SIP_SIP_PORT``).
+Sections mirror the dataclasses: a dataclass-typed field is a TOML table
+(``[tools.web]``) and the env var for a key is ``AGENT_SIP_<PATH>_<KEY>`` with the
+dotted path joined by ``_`` (e.g. ``AGENT_SIP_TOOLS_WEB_TAVILY_API_KEY``,
+``AGENT_SIP_DB_PATH``).
 """
 import dataclasses
 import json
 import os
 import tomllib
 import typing
+import zoneinfo
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -93,7 +97,7 @@ class LlmConfig:
 
 
 @dataclass
-class ToolsConfig:
+class WebToolsConfig:
     """Web tools for the agent: web_search (Tavily) and fetch_url (local)."""
     tavily_api_key: str = ""          # empty = web_search disabled
     tavily_base_url: str = "https://api.tavily.com"
@@ -106,6 +110,32 @@ class ToolsConfig:
 
 
 @dataclass
+class RemindersConfig:
+    """Reminder tools + scheduler (see docs/reminders-plan.md)."""
+    enabled: bool = True              # register tools + start scheduler
+    timezone: str = ""                # IANA name; empty = system local
+    default_phone: str = ""           # fallback; empty = first [[phones]] entry
+    ring_timeout: float = 30.0        # seconds before cancelling an unanswered call
+    retry_attempts: int = 3           # total calls per occurrence
+    retry_interval: float = 300.0     # seconds between attempts
+    max_late: float = 3600.0          # startup recovery window
+    keep_days: int = 7                # retention of done/missed rows
+
+
+@dataclass
+class ToolsConfig:
+    """Tool families; one subsection per family."""
+    web: WebToolsConfig = field(default_factory=WebToolsConfig)
+    reminders: RemindersConfig = field(default_factory=RemindersConfig)
+
+
+@dataclass
+class DbConfig:
+    """SQLite file shared by stateful features (reminders, ...)."""
+    path: str = "data/agent-sip.db"
+
+
+@dataclass
 class Config:
     sip: SipConfig = field(default_factory=SipConfig)
     audio: AudioConfig = field(default_factory=AudioConfig)
@@ -113,6 +143,7 @@ class Config:
     tts: TtsConfig = field(default_factory=TtsConfig)
     llm: LlmConfig = field(default_factory=LlmConfig)
     tools: ToolsConfig = field(default_factory=ToolsConfig)
+    db: DbConfig = field(default_factory=DbConfig)
     phones: list[PhoneConfig] = field(default_factory=list)  # [[phones]] tables; no env override
 
 
@@ -128,6 +159,35 @@ def _coerce(raw, typ):
     return typ(raw)
 
 
+def _is_dataclass_type(typ) -> bool:
+    return isinstance(typ, type) and dataclasses.is_dataclass(typ)
+
+
+def _apply_section(obj, values, env, path: list[str]) -> None:
+    """Apply a TOML table (plus env overrides) to a dataclass, recursing into
+    dataclass-typed fields. ``path`` is the dotted location for error messages."""
+    where = ".".join(path)
+    if not isinstance(values, dict):
+        raise TypeError(f"[{where}] must be a table")
+    unknown = set(values) - {f.name for f in dataclasses.fields(obj)}
+    if unknown:
+        msg = f"Unknown keys in [{where}]: {sorted(unknown)}"
+        if path == ["tools"]:
+            msg += " (tool settings moved into subsections, e.g. [tools.web])"
+        raise ValueError(msg)
+    for f in dataclasses.fields(obj):
+        field_path = [*path, f.name]
+        if _is_dataclass_type(f.type):
+            _apply_section(getattr(obj, f.name), values.get(f.name, {}), env, field_path)
+            continue
+        raw = values.get(f.name)
+        env_key = f"{ENV_PREFIX}_{'_'.join(field_path)}".upper()
+        if env_key in env:
+            raw = env[env_key]
+        if raw is not None:
+            setattr(obj, f.name, _coerce(raw, f.type))
+
+
 def load_config(path: str | os.PathLike | None = None, env=None) -> Config:
     env = os.environ if env is None else env
     data: dict = {}
@@ -138,22 +198,22 @@ def load_config(path: str | os.PathLike | None = None, env=None) -> Config:
         data = tomllib.loads(p.read_text())
 
     cfg = Config()
-    for section in dataclasses.fields(cfg):
-        if section.name == "phones":
+    unknown = set(data) - {f.name for f in dataclasses.fields(cfg)}
+    if unknown:
+        raise ValueError(f"Unknown top-level keys: {sorted(unknown)}")
+    for f in dataclasses.fields(cfg):
+        if f.name == "phones":
             continue
-        obj = getattr(cfg, section.name)
-        values = data.get(section.name, {})
-        known = {f.name for f in dataclasses.fields(obj)}
-        unknown = set(values) - known
-        if unknown:
-            raise ValueError(f"Unknown keys in [{section.name}]: {sorted(unknown)}")
-        for f in dataclasses.fields(obj):
-            raw = values.get(f.name)
-            env_key = f"{ENV_PREFIX}_{section.name}_{f.name}".upper()
-            if env_key in env:
-                raw = env[env_key]
-            if raw is not None:
-                setattr(obj, f.name, _coerce(raw, f.type))
+        if _is_dataclass_type(f.type):
+            _apply_section(getattr(cfg, f.name), data.get(f.name, {}), env, [f.name])
+            continue
+        raw = data.get(f.name)
+        env_key = f"{ENV_PREFIX}_{f.name}".upper()
+        if env_key in env:
+            raw = env[env_key]
+        if raw is not None:
+            setattr(cfg, f.name, _coerce(raw, f.type))
+
     from .audio.earcons import parse_melody
     try:
         parse_melody(cfg.audio.melody_notes)
@@ -168,4 +228,18 @@ def load_config(path: str | os.PathLike | None = None, env=None) -> Config:
     names = [p.name for p in cfg.phones]
     if len(set(names)) != len(names):
         raise ValueError("Duplicate phone names in [[phones]]")
+
+    reminders = cfg.tools.reminders
+    tools_table = data.get("tools", {})
+    reminders_configured = (isinstance(tools_table, dict) and "reminders" in tools_table) or any(
+        k.startswith(f"{ENV_PREFIX}_TOOLS_REMINDERS_") for k in env)
+    if reminders_configured and reminders.enabled and not cfg.phones:
+        raise ValueError("[tools.reminders] enabled requires at least one [[phones]] entry")
+    if reminders.timezone:
+        try:
+            zoneinfo.ZoneInfo(reminders.timezone)
+        except (zoneinfo.ZoneInfoNotFoundError, ValueError) as e:
+            raise ValueError(
+                f"[tools.reminders] timezone: invalid IANA timezone {reminders.timezone!r}"
+            ) from e
     return cfg

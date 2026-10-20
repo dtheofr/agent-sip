@@ -21,13 +21,15 @@ class Call:
     def __init__(self, server: "SipServer", *, call_id: str, direction: str,
                  local_hdr: str, remote_hdr: str, remote_target: str,
                  sip_addr: tuple[str, int], rtp: RtpSession, rtp_port: int, number: str = "",
-                 phone: str | None = None) -> None:
+                 phone: str | None = None, metadata: dict | None = None) -> None:
         self.call_id = call_id
         self.direction = direction            # "incoming" | "outgoing"
         self.number = number                  # dialed number (incoming calls)
         self.phone = phone                    # name of the known phone, if recognised
         self.state = "ringing"                # ringing | active | ended
         self.ended = asyncio.Event()
+        self.answered = asyncio.Event()       # set in SipServer._activate
+        self.metadata: dict = metadata if metadata is not None else {}
         # --- SIP dialog state (used by SipServer) ---
         self.local_hdr = local_hdr            # From/To header value with our tag
         self.remote_hdr = remote_hdr

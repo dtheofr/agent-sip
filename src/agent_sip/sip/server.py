@@ -172,10 +172,12 @@ class SipServer:
         self._activate(call)
 
     # ---------------- outgoing calls ----------------
-    async def originate(self, phone: str | PhoneConfig | None = None) -> Call:
+    async def originate(self, phone: str | PhoneConfig | None = None,
+                        metadata: dict | None = None) -> Call:
         """Ring a known phone (by name or config; default: the only/first one).
 
-        The handler starts when the phone is answered.
+        The handler starts when the phone is answered. ``metadata`` is attached to
+        the returned call before the INVITE is sent, so the handler can read it.
         """
         if phone is None:
             if not self.phones:
@@ -193,7 +195,7 @@ class SipServer:
         call = Call(self, call_id=call_id, direction="outgoing", local_hdr=local,
                     remote_hdr=remote, remote_target=f"sip:{user}@{host}:{port}",
                     sip_addr=(host, port), rtp=rtp, rtp_port=rtp_port, number=user,
-                    phone=phone.name)
+                    phone=phone.name, metadata=metadata)
         call.invite_branch = "z9hG4bK" + _rand()
         self.calls[call_id] = call
         self._send(self._invite(call, build_sdp(self.local_ip, rtp_port)), call.sip_addr)
@@ -243,6 +245,7 @@ class SipServer:
     # ---------------- call state ----------------
     def _activate(self, call: Call) -> None:
         call.state = "active"
+        call.answered.set()
         call.task = self._spawn(self._run_handler(call))
 
     async def _run_handler(self, call: Call) -> None:

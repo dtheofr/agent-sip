@@ -31,11 +31,15 @@ the phone/ATA's SIP proxy/dial plan at this machine.
 ## Configuration
 
 `config.toml` (see `config.example.toml`), overridden by env vars
-`AGENT_SIP_<SECTION>_<KEY>`, e.g. `AGENT_SIP_SIP_PORT=5080`.
+`AGENT_SIP_<SECTION>_<KEY>`, e.g. `AGENT_SIP_SIP_PORT=5080`. Sections nest, so an env var is the
+dotted subsection path joined with `_`: `[tools.web]` -> `AGENT_SIP_TOOLS_WEB_TAVILY_API_KEY`,
+`[db]` -> `AGENT_SIP_DB_PATH`.
 `sip.local_ip` is auto-detected when empty.
 `[stt]` and `[tts]` accept an `extra` table of custom parameters merged into the request
 (form fields for STT, JSON body for TTS), e.g. `extra = { speed = 1.1 }`; via env, pass JSON:
 `AGENT_SIP_TTS_EXTRA='{"speed":1.1}'`.
+Web tool settings live under `[tools.web]` and reminder settings under `[tools.reminders]`.
+`[db]` sets the SQLite path shared by stateful features (kept outside the tracked tree).
 Phones are declared as repeated `[[phones]]` tables (name, ip, port, user); these are TOML-only.
 
 ## Writing your own behaviour
