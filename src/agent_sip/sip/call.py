@@ -28,6 +28,7 @@ class Call:
         self.phone = phone                    # name of the known phone, if recognised
         self.state = "ringing"                # ringing | active | ended
         self.ended = asyncio.Event()
+        self.acked = asyncio.Event()          # incoming: ACK for our 200 OK received
         # --- SIP dialog state (used by SipServer) ---
         self.local_hdr = local_hdr            # From/To header value with our tag
         self.remote_hdr = remote_hdr

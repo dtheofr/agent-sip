@@ -1,5 +1,6 @@
 """SIP UAS/UAC over UDP. No application logic lives here: see CallHandler."""
 import asyncio
+import contextlib
 import logging
 import socket
 import uuid
@@ -13,6 +14,10 @@ from .rtp import RtpSession
 from .sdp import build_sdp, parse_rtp_target
 
 log = logging.getLogger(__name__)
+
+T1, T2 = 0.5, 4.0          # RFC 3261 timers: 200 OK retransmit interval start / cap
+ACK_TIMEOUT = 64 * T1      # give up (and BYE) if no ACK arrives within 32 s
+ACK_GRACE = T1             # start the handler after this long even without an ACK
 
 
 def _rand(n: int = 8) -> str:
@@ -137,7 +142,10 @@ class SipServer:
             if call:
                 log.info("[%s] remote %s", call.call_id[:8], method)
                 self._end(call)
-        elif method != "ACK":
+        elif method == "ACK":
+            if call:
+                call.acked.set()
+        else:
             self._reply(msg, 200, "OK", addr)          # OPTIONS, NOTIFY...
 
     async def _handle_invite(self, msg: SipMessage, addr) -> None:
@@ -170,7 +178,32 @@ class SipServer:
         self._reply(msg, 180, "Ringing", addr, to_tag=tag)
         call.final_response = self._reply(msg, 200, "OK", addr, to_tag=tag,
                                           body=build_sdp(self.local_ip, port))
-        self._activate(call)
+        call.state = "active"
+        self._spawn(self._retransmit_200(call, addr))
+        call.task = self._spawn(self._establish(call))
+
+    async def _establish(self, call: Call) -> None:
+        """Wait briefly for the ACK so the phone is ready, then run the handler."""
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(call.acked.wait(), ACK_GRACE)
+        if call.state == "active":
+            await self._run_handler(call)
+
+    async def _retransmit_200(self, call: Call, addr) -> None:
+        """RFC 3261 13.3.1.4: resend the 200 OK until ACKed; BYE if it never is."""
+        delay, elapsed = T1, 0.0
+        while not call.acked.is_set() and call.state == "active" and elapsed < ACK_TIMEOUT:
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(call.acked.wait(), delay)
+            if call.acked.is_set() or call.state != "active":
+                return
+            log.info("[%s] no ACK yet, retransmitting 200 OK", call.call_id[:8])
+            self._send(call.final_response, addr)
+            elapsed += delay
+            delay = min(delay * 2, T2)
+        if not call.acked.is_set() and call.state == "active":
+            log.warning("[%s] no ACK received, hanging up", call.call_id[:8])
+            await self.hangup(call)
 
     # ---------------- outgoing calls ----------------
     async def originate(self, phone: str | PhoneConfig | None = None) -> Call:
