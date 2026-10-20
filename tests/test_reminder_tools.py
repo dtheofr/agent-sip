@@ -126,12 +126,95 @@ class ReminderToolsTest(unittest.IsolatedAsyncioTestCase):
         await self.call(tools, "create_reminder",
                         {"message": "x", "when": "2027-01-16T08:30"})
         self.assertEqual(len(events), 1)
-        await self.call(tools, "delete_reminder", {"id": 1})
+        await self.call(tools, "update_reminder", {"id": 1, "message": "y"})
         self.assertEqual(len(events), 2)
+        await self.call(tools, "delete_reminder", {"id": 1})
+        self.assertEqual(len(events), 3)
         await self.call(tools, "delete_reminder", {"id": 404})
+        await self.call(tools, "update_reminder", {"id": 404, "message": "z"})
         await self.call(tools, "create_reminder",
                         {"message": "past", "when": "2027-01-14T08:30"})
-        self.assertEqual(len(events), 2)
+        self.assertEqual(len(events), 3)
+
+    async def test_update_message_and_time_rearms(self):
+        tools = self.tools()
+        await self.call(tools, "create_reminder",
+                        {"message": "old", "when": "2027-01-16T08:30", "repeat": "daily"})
+        await self.store.mark_attempt(1, NOW + 60)  # a pending retry in flight
+        out = await self.call(tools, "update_reminder",
+                              {"id": 1, "message": "new", "when": "2027-01-17T09:00"})
+        self.assertIn("updated reminder 1", out)
+        self.assertIn("new", out)
+        row = await self.store.get(1)
+        expected = int(datetime(2027, 1, 17, 9, 0, tzinfo=UTC).timestamp())
+        self.assertEqual(row.message, "new")
+        self.assertEqual((row.due_at, row.next_try_at, row.attempts, row.status),
+                         (expected, expected, 0, "pending"))
+        self.assertEqual(row.repeat, "daily")  # untouched
+
+    async def test_update_repeat_and_clearing_until(self):
+        tools = self.tools()
+        await self.call(tools, "create_reminder",
+                        {"message": "x", "when": "2027-01-16T08:30",
+                         "repeat": "daily", "until": "2027-02-01T08:30"})
+        await self.call(tools, "update_reminder", {"id": 1, "repeat": "none"})
+        row = await self.store.get(1)
+        self.assertEqual(row.repeat, "none")
+        self.assertIsNone(row.until)  # one-shot has no series end
+
+        await self.call(tools, "update_reminder",
+                        {"id": 1, "repeat": "weekly", "until": "2027-03-01T08:30"})
+        row = await self.store.get(1)
+        self.assertEqual(row.repeat, "weekly")
+        self.assertEqual(row.until, int(datetime(2027, 3, 1, 8, 30, tzinfo=UTC).timestamp()))
+
+    async def test_update_finished_requires_future_when_to_rearm(self):
+        tools = self.tools()
+        await self.call(tools, "create_reminder",
+                        {"message": "x", "when": "2027-01-16T08:30"})
+        await self.store.mark_delivered(1)
+
+        out = await self.call(tools, "update_reminder", {"id": 1, "message": "y"})
+        self.assertTrue(out.startswith("error"), out)
+        self.assertIn("done", out)
+
+        out = await self.call(tools, "update_reminder",
+                              {"id": 1, "message": "y", "when": "2027-01-18T08:30"})
+        self.assertIn("updated reminder 1", out)
+        row = await self.store.get(1)
+        self.assertEqual((row.message, row.status), ("y", "pending"))
+
+    async def test_update_validation_errors(self):
+        tools = self.tools()
+        await self.call(tools, "create_reminder",
+                        {"message": "x", "when": "2027-01-16T08:30"})
+        cases = [
+            ({"id": 999, "message": "y"}, "no reminder"),
+            ({"id": 1}, "nothing to update"),
+            ({"id": 1, "repeat": "yearly"}, "repeat"),
+            ({"id": 1, "when": "2027-01-14T08:30"}, "past"),
+            ({"id": 1, "when": "not-a-date"}, "invalid"),
+            ({"id": 1, "until": "2027-02-01T08:30"}, "repeating"),
+            ({"id": 1, "when": "2027-01-17T08:30", "repeat": "daily",
+              "until": "2027-01-16T08:30"}, "until"),
+            ({"id": 1, "message": "   "}, "empty"),
+        ]
+        for args, needle in cases:
+            out = await self.call(tools, "update_reminder", args)
+            self.assertTrue(out.startswith("error"), out)
+            self.assertIn(needle, out.lower())
+        row = await self.store.get(1)
+        self.assertEqual((row.message, row.repeat, row.status), ("x", "none", "pending"))
+
+    async def test_update_uses_reminder_timezone(self):
+        tools = self.tools(tz="Europe/Berlin", phones=[PhoneConfig(name="p")])
+        await self.call(tools, "create_reminder",
+                        {"message": "winter", "when": "2027-01-16T08:30"})
+        await self.call(tools, "update_reminder", {"id": 1, "when": "2027-07-16T08:30"})
+        row = await self.store.get(1)
+        summer = int(datetime(2027, 7, 16, 6, 30, tzinfo=UTC).timestamp())
+        self.assertEqual(row.due_at, summer)
+        self.assertEqual(row.tz, "Europe/Berlin")
 
     async def test_validation_errors(self):
         tools = self.tools()

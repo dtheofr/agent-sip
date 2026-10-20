@@ -36,6 +36,19 @@ T = TypeVar("T")
 _SELECT = "SELECT * FROM reminders"
 _DAY = 86_400
 
+# Columns ``update`` is allowed to touch. Guards the dynamic SET clause.
+_EDITABLE = {
+    "message",
+    "due_at",
+    "tz",
+    "phone",
+    "repeat",
+    "until",
+    "status",
+    "attempts",
+    "next_try_at",
+}
+
 
 class ReminderStore:
     """Async wrapper around the ``reminders`` table."""
@@ -170,6 +183,22 @@ class ReminderStore:
 
         return self._run(operation, write=True)
 
+    def _edit(self, reminder_id: int, **fields: object) -> Reminder | None:
+        unknown = set(fields) - _EDITABLE
+        if unknown:
+            raise ValueError(f"cannot update column(s): {', '.join(sorted(unknown))}")
+
+        def operation() -> Reminder | None:
+            if fields:
+                assignments = ", ".join(f"{name} = ?" for name in fields)
+                self._conn.execute(
+                    f"UPDATE reminders SET {assignments} WHERE id = ?",
+                    (*fields.values(), reminder_id),
+                )
+            return self._row(reminder_id)
+
+        return self._run(operation, write=True)
+
     def _purge_finished(self, keep_days: float, now: float | None) -> int:
         def operation() -> int:
             reference = time.time() if now is None else now
@@ -279,6 +308,15 @@ class ReminderStore:
         and puts the reminder back to ``pending``.
         """
         return await asyncio.to_thread(self._reschedule, reminder_id, next_at)
+
+    async def update(self, reminder_id: int, **fields: object) -> Reminder | None:
+        """Update the given columns of ``reminder_id`` and return the fresh row.
+
+        Only editable columns (:data:`_EDITABLE`) are accepted; an unknown name
+        raises :class:`ValueError`. Passing no fields is a no-op read. Returns
+        ``None`` when the reminder does not exist.
+        """
+        return await asyncio.to_thread(self._edit, reminder_id, **fields)
 
     async def purge_finished(self, keep_days: float, now: float | None = None) -> int:
         """Delete ``done``/``missed`` rows older than the retention window.

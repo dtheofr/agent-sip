@@ -148,6 +148,36 @@ class ReminderStoreTest(unittest.IsolatedAsyncioTestCase):
             (86_500, 86_500, 0, "pending"),
         )
 
+    async def test_update_changes_only_given_columns(self):
+        reminder = await self.add(message="old", due_at=100, repeat="weekly", until=500)
+        await self.store.mark_attempt(reminder.id, 130)
+        updated = await self.store.update(
+            reminder.id,
+            message="new",
+            due_at=200,
+            until=None,
+            status="pending",
+            attempts=0,
+            next_try_at=200,
+        )
+        self.assertEqual(updated.message, "new")
+        self.assertEqual(updated.due_at, 200)
+        self.assertIsNone(updated.until)
+        self.assertEqual(updated.next_try_at, 200)
+        self.assertEqual(updated.attempts, 0)
+        self.assertEqual(updated.repeat, "weekly")  # untouched
+        self.assertEqual(updated.phone, "phone")
+
+    async def test_update_without_fields_is_a_noop_and_missing_is_none(self):
+        reminder = await self.add(message="same")
+        self.assertEqual(await self.store.update(reminder.id), reminder)
+        self.assertIsNone(await self.store.update(999_999, message="x"))
+
+    async def test_update_rejects_unknown_columns(self):
+        reminder = await self.add()
+        with self.assertRaises(ValueError):
+            await self.store.update(reminder.id, created_at=1)
+
     async def test_purge_finished_respects_retention_window(self):
         now = 1_000_000_000
         old_done = await self.add(message="old", due_at=now - 10 * DAY)

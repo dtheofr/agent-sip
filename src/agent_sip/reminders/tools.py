@@ -1,4 +1,4 @@
-"""LLM tools for reminders: create, list and delete by voice.
+"""LLM tools for reminders: create, list, update and delete by voice.
 
 The tools are *closures over one call's context*, not ``@tool``-registered globals:
 ``create_reminder`` defaults its target to the phone of the current call. ``__main__``
@@ -9,7 +9,7 @@ bound to ``call.phone``.
 relative times with ``get_current_datetime`` first). They are interpreted in the
 configured timezone (empty = system local) and stored as UTC epoch seconds.
 
-The optional ``on_change`` callback fires after a successful create/delete. It is the
+The optional ``on_change`` callback fires after a successful create/update/delete. It is the
 hook Slice 5 uses to wake the scheduler; the tools never touch the scheduler directly.
 """
 from __future__ import annotations
@@ -53,6 +53,21 @@ _LIST_PARAMS = {
 _DELETE_PARAMS = {
     "type": "object",
     "properties": {"id": {"type": "integer", "description": "Reminder id to delete."}},
+    "required": ["id"],
+}
+
+_UPDATE_PARAMS = {
+    "type": "object",
+    "properties": {
+        "id": {"type": "integer", "description": "Reminder id to update."},
+        "message": {"type": "string", "description": "New reminder text."},
+        "when": {"type": "string",
+                 "description": "New absolute local ISO 8601 datetime, e.g. 2025-06-01T08:30."},
+        "repeat": {"type": "string", "enum": list(REPEATS),
+                   "description": "New recurrence; use none to stop repeating."},
+        "until": {"type": "string",
+                  "description": "New local ISO 8601 end of the recurrence."},
+    },
     "required": ["id"],
 }
 
@@ -198,6 +213,69 @@ def reminder_tools(
             on_change()
         return f"deleted reminder {id}"
 
+    async def update_reminder(
+        id: int,
+        message: str | None = None,
+        when: str | None = None,
+        repeat: str | None = None,
+        until: str | None = None,
+    ) -> str:
+        reminder = await store.get(int(id))
+        if reminder is None:
+            return f"error: no reminder with id {id}"
+        if message is None and when is None and repeat is None and until is None:
+            return "error: nothing to update; pass message, when, repeat or until"
+        if repeat is not None and repeat not in REPEATS:
+            raise ValueError(f"unknown repeat {repeat!r}; use one of {', '.join(REPEATS)}")
+        if when is None and reminder.status != "pending":
+            return (
+                f"error: reminder {id} is {reminder.status}; pass a future when"
+                " to re-arm it"
+            )
+
+        # Times on an existing reminder are interpreted in its own zone, not the
+        # current config's: the zone was fixed when the reminder was created.
+        zone = _resolve_tz(reminder.tz or tz)[0]
+        effective_repeat = repeat if repeat is not None else reminder.repeat
+        current = int(now())
+
+        fields: dict[str, object] = {}
+        if message is not None:
+            if not message.strip():
+                raise ValueError("message cannot be empty")
+            fields["message"] = message
+        if repeat is not None:
+            fields["repeat"] = repeat
+            if repeat == "none":
+                fields["until"] = None  # a one-shot has no series to end
+        if when is not None:
+            due_at = _parse_local(when, zone)
+            if due_at < current:
+                raise ValueError(f"{when!r} is in the past; use a future time")
+            fields["due_at"] = due_at
+            # Re-arm so the scheduler acts on the new time and not a stale retry.
+            fields["next_try_at"] = due_at
+            fields["attempts"] = 0
+            fields["status"] = "pending"
+        if until is not None:
+            if effective_repeat == "none":
+                raise ValueError("until needs a repeating reminder")
+            until_at = _parse_local(until, zone)
+            due_at = int(fields.get("due_at", reminder.due_at))
+            if until_at < due_at:
+                raise ValueError("until is before when")
+            fields["until"] = until_at
+
+        updated = await store.update(int(id), **fields)
+        if updated is None:  # deleted between the lookup and the write
+            return f"error: no reminder with id {id}"
+        if on_change is not None:
+            on_change()
+        return (
+            f"updated reminder {id}: {updated.message} - "
+            f"{_spoken(updated.due_at, updated.tz or stored_tz)} ({updated.repeat})"
+        )
+
     return [
         Tool(
             "create_reminder",
@@ -217,5 +295,13 @@ def reminder_tools(
             "Delete a reminder by id. Safe to call with an unknown id.",
             delete_reminder,
             _DELETE_PARAMS,
+        ),
+        Tool(
+            "update_reminder",
+            "Change an existing reminder's message, when, repeat or until. Only pass the "
+            "fields to change; times are absolute local ISO 8601 (call get_current_datetime "
+            "first). Editing a finished reminder requires a future when to re-arm it.",
+            update_reminder,
+            _UPDATE_PARAMS,
         ),
     ]
