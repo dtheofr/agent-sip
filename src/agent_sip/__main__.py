@@ -6,6 +6,7 @@ import os
 from .config import load_config
 from .agent import OpenAIChatAgent, load_system_prompt
 from .assistant import AssistantHandler
+from .audio import make_vad
 from .sip import SipServer
 from .stt import OpenAITranscriber
 from .tts import OpenAISynthesizer
@@ -16,6 +17,7 @@ async def run(args) -> None:
     prompt = load_system_prompt(cfg.llm.system_prompt_file)   # read once at startup
     handler = AssistantHandler(cfg.audio, OpenAITranscriber(cfg.stt), OpenAISynthesizer(cfg.tts),
                                lambda: OpenAIChatAgent(cfg.llm, prompt), cfg.llm.greeting)
+    await asyncio.to_thread(make_vad, cfg.audio)   # warm up: import numpy/onnx, load model
     server = SipServer(cfg.sip, handler, cfg.phones)
     await server.start()
     print(f"Ready on {server.local_ip}:{cfg.sip.port}. Lift the handset! (Ctrl+C to quit)")

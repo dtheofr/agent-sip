@@ -1,5 +1,6 @@
 """Assistant handler: listen -> STT -> agent (LLM) -> TTS, one conversation per call."""
 import array
+import asyncio
 import logging
 from collections.abc import Callable
 
@@ -22,7 +23,7 @@ class AssistantHandler(CallHandler):
     async def on_call(self, call: Call) -> None:
         tag = call.call_id[:8]
         agent = self.agent_factory()          # fresh history for every call
-        vad = make_vad(self.audio)            # stateful: one per call
+        vad = await asyncio.to_thread(make_vad, self.audio)   # stateful: one per call
         log.info("[%s] assistant session started", tag)
         barged = None                         # caller audio captured by a barge-in
         if self.greeting:
