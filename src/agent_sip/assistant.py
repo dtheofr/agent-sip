@@ -15,13 +15,13 @@ log = logging.getLogger(__name__)
 
 class AssistantHandler(CallHandler):
     def __init__(self, audio: AudioConfig, stt: Transcriber, tts: Synthesizer,
-                 agent_factory: Callable[[], Agent], greeting: str = "") -> None:
+                 agent_factory: Callable[[Call], Agent], greeting: str = "") -> None:
         self.audio, self.stt, self.tts = audio, stt, tts
         self.agent_factory, self.greeting = agent_factory, greeting
 
     async def on_call(self, call: Call) -> None:
         tag = call.call_id[:8]
-        agent = self.agent_factory()          # fresh history for every call
+        agent = self.agent_factory(call)      # fresh history (and tools) for every call
         vad = make_vad(self.audio)            # stateful: one per call
         log.info("[%s] assistant session started", tag)
         barged = None                         # caller audio captured by a barge-in
