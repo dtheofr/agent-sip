@@ -57,7 +57,7 @@ class Call:
         """Next 20 ms of incoming audio, or None on timeout."""
         try:
             return await asyncio.wait_for(self._rtp.rx.get(), timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
 
     def flush_input(self) -> None:

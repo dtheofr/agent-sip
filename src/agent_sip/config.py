@@ -5,11 +5,11 @@ Env var for a key is ``AGENT_SIP_<SECTION>_<KEY>`` (e.g. ``AGENT_SIP_SIP_PORT``)
 import dataclasses
 import json
 import os
-import typing
 import tomllib
+import typing
 from dataclasses import dataclass, field
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 ENV_PREFIX = "AGENT_SIP"
 

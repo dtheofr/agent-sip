@@ -4,7 +4,7 @@ import logging
 from collections.abc import Callable
 
 from .agent import Agent
-from .audio import make_vad, thinking, play_interruptible, record_until_silence
+from .audio import make_vad, play_interruptible, record_until_silence, thinking
 from .config import AudioConfig
 from .sip import Call, CallHandler
 from .stt import Transcriber

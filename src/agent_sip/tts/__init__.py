@@ -3,4 +3,4 @@
 from .base import Synthesizer
 from .openai import OpenAISynthesizer
 
-__all__ = ["Synthesizer", "OpenAISynthesizer"]
+__all__ = ["OpenAISynthesizer", "Synthesizer"]

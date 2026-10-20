@@ -43,7 +43,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install ruff
-        run: pip install ruff
+        run: pip install ruff==0.17.1
 
       # Same check as `make lint`, without the venv + Silero model download.
       - name: ruff check

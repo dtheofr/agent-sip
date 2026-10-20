@@ -3,4 +3,4 @@
 from .base import Transcriber
 from .openai import OpenAITranscriber
 
-__all__ = ["Transcriber", "OpenAITranscriber"]
+__all__ = ["OpenAITranscriber", "Transcriber"]

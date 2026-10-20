@@ -6,9 +6,10 @@ so keep them fast or use ``asyncio.to_thread`` inside an async handler.
 """
 import inspect
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any
 
 NO_ARGS = {"type": "object", "properties": {}}
 
@@ -61,7 +62,7 @@ class ToolRegistry:
 registry = ToolRegistry()
 
 
-def tool(name: str, description: str, parameters: dict = None):
+def tool(name: str, description: str, parameters: dict | None = None):
     """Decorator: register a function as a tool in the default registry."""
     def deco(fn):
         registry.add(Tool(name, description, fn, parameters))

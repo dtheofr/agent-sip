@@ -51,7 +51,7 @@ class Vad(unittest.IsolatedAsyncioTestCase):
         self.assertLess(len(pcm), 160 * 120)
 
     async def test_record_no_speech(self):
-        pcm, heard = await record_until_silence(FakeCall([QUIET] * 5), EnergyVAD(),
+        _pcm, heard = await record_until_silence(FakeCall([QUIET] * 5), EnergyVAD(),
                                                 no_speech_timeout=0.05)
         self.assertFalse(heard)
 

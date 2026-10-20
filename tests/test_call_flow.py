@@ -6,8 +6,7 @@ import struct
 import unittest
 
 from agent_sip.config import SipConfig
-from agent_sip.sip import Call, CallHandler, SipServer
-from agent_sip.sip import g711
+from agent_sip.sip import Call, CallHandler, SipServer, g711
 from agent_sip.sip.message import parse
 from agent_sip.sip.sdp import parse_rtp_target
 

@@ -7,8 +7,7 @@ import uuid
 from ..config import PhoneConfig, SipConfig
 from .call import Call
 from .handler import CallHandler
-from .message import (SipMessage, build_request, build_response, header_tag, header_uri,
-                      parse)
+from .message import SipMessage, build_request, build_response, header_uri, parse
 from .rtp import RtpSession
 from .sdp import build_sdp, parse_rtp_target
 

@@ -3,9 +3,9 @@ import asyncio
 import logging
 import os
 
-from .config import load_config
 from .agent import OpenAIChatAgent, ToolRegistry, load_system_prompt, registry, web_tools
 from .assistant import AssistantHandler
+from .config import load_config
 from .sip import SipServer
 from .stt import OpenAITranscriber
 from .tts import OpenAISynthesizer

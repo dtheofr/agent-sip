@@ -1,6 +1,5 @@
 import array
 import io
-import math
 import subprocess
 import wave
 
