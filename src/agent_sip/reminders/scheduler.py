@@ -168,7 +168,8 @@ class ReminderScheduler:
                 await self.store.set_next_try(
                     reminder.id, int(self.now() + _BUSY_POSTPONE)
                 )
-                log.info("reminder %s postponed: %s is busy", reminder.id, reminder.phone)
+                log.info("reminder %s postponed: %s is busy (calls: %s)", reminder.id,
+                         reminder.phone, self._describe_calls(reminder.phone))
                 return
 
             # Persist the attempt *before* ringing. The same update records an
@@ -204,6 +205,10 @@ class ReminderScheduler:
         finally:
             self._delivery_events.pop(reminder.id, None)
             self._in_flight.discard(reminder.id)
+
+    def _describe_calls(self, phone: str) -> str:
+        return ", ".join(f"{getattr(c, 'call_id', '?')[:8]}/{getattr(c, 'direction', '?')}/{c.state}"
+                         for c in self.server.calls.values() if c.phone == phone)
 
     def _phone_busy(self, phone: str) -> bool:
         if self.server is None:
