@@ -4,7 +4,7 @@ import logging
 from collections.abc import Callable
 
 from .agent import Agent
-from .audio import make_vad, play_interruptible, record_until_silence
+from .audio import make_vad, thinking, play_interruptible, record_until_silence
 from .config import AudioConfig
 from .sip import Call, CallHandler
 from .stt import Transcriber
@@ -26,7 +26,9 @@ class AssistantHandler(CallHandler):
         log.info("[%s] assistant session started", tag)
         barged = None                         # caller audio captured by a barge-in
         if self.greeting:
-            barged = await self._say(call, vad, self.greeting, tag)
+            async with thinking(call, self.audio, beep=False):
+                pcm = await self._synth(self.greeting, tag)
+            barged = await self._play(call, vad, pcm, tag)
         while call.active:
             pcm, heard = await record_until_silence(
                 call, vad,
@@ -38,23 +40,36 @@ class AssistantHandler(CallHandler):
             barged = None
             if not heard:
                 continue
-            try:
-                text = await self.stt.transcribe(pcm)
-                log.info("[%s] caller: %r", tag, text)
-                if not text:
+            reply_pcm = None
+            async with thinking(call, self.audio):
+                try:
+                    text = await self.stt.transcribe(pcm)
+                    log.info("[%s] caller: %r", tag, text)
+                    if not text:
+                        continue
+                    reply = await agent.respond(text)
+                    log.info("[%s] agent: %r", tag, reply)
+                except Exception:
+                    log.exception("[%s] STT/agent failed", tag)
                     continue
-                reply = await agent.respond(text)
-                log.info("[%s] agent: %r", tag, reply)
-            except Exception:
-                log.exception("[%s] STT/agent failed", tag)
-                continue
-            if reply:
-                barged = await self._say(call, vad, reply, tag)
+                if reply:
+                    reply_pcm = await self._synth(reply, tag)
+            if reply_pcm is not None:
+                barged = await self._play(call, vad, reply_pcm, tag)
 
-    async def _say(self, call: Call, vad, text: str, tag: str) -> array.array | None:
-        """Speak ``text``. Returns the caller's audio if they interrupted, else None."""
+    async def _synth(self, text: str, tag: str) -> array.array | None:
         try:
-            pcm = await self.tts.synthesize(text)
+            return await self.tts.synthesize(text)
+        except Exception:
+            log.exception("[%s] TTS failed", tag)
+            return None
+
+    async def _play(self, call: Call, vad, pcm: array.array | None,
+                    tag: str) -> array.array | None:
+        """Play ``pcm``. Returns the caller's audio if they interrupted, else None."""
+        if pcm is None:
+            return None
+        try:
             if not self.audio.barge_in:
                 await call.play(pcm)
                 return None
@@ -64,5 +79,5 @@ class AssistantHandler(CallHandler):
                 log.info("[%s] caller interrupted the agent", tag)
             return captured
         except Exception:
-            log.exception("[%s] TTS failed", tag)
+            log.exception("[%s] playback failed", tag)
             return None

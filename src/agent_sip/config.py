@@ -44,6 +44,16 @@ class AudioConfig:
     silence_end: float = 1.5
     no_speech_timeout: float = 8.0
     max_record: float = 20.0
+    earcons: bool = True            # waiting-feedback sounds master switch
+    earcon_volume: float = 0.25     # 0-1 amplitude scale
+    beep: bool = True               # beep when the end of the caller's input is detected
+    beep_freq: float = 800
+    beep_duration: float = 0.12
+    melody: bool = True             # looping pattern while waiting for the reply
+    melody_delay: float = 0.4       # wait before the melody starts
+    melody_notes: str = "A4,E5"     # comma-separated note names; "-" is a rest
+    melody_note_duration: float = 0.3
+    melody_gap: float = 2.0         # silence between repetitions
 
 
 @dataclass
@@ -95,6 +105,8 @@ class Config:
 def _coerce(raw, typ):
     if typing.get_origin(typ) is dict:
         return raw if isinstance(raw, dict) else json.loads(raw)
+    if typ is str and isinstance(raw, list):
+        return ",".join(str(x) for x in raw)
     if typ is bool:
         if isinstance(raw, bool):
             return raw
@@ -128,6 +140,11 @@ def load_config(path: str | os.PathLike | None = None, env=None) -> Config:
                 raw = env[env_key]
             if raw is not None:
                 setattr(obj, f.name, _coerce(raw, f.type))
+    from .audio.earcons import parse_melody
+    try:
+        parse_melody(cfg.audio.melody_notes)
+    except ValueError as e:
+        raise ValueError(f"[audio] melody_notes: {e}") from None
     phone_keys = {f.name for f in dataclasses.fields(PhoneConfig)}
     for raw in data.get("phones", []):
         unknown = set(raw) - phone_keys

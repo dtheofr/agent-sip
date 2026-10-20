@@ -27,12 +27,6 @@ def load_audio(path: str) -> array.array:
         return pcm
 
 
-def make_beep(freq: float = 1000, dur: float = 0.25, amp: int = 8000) -> array.array:
-    n = int(SAMPLE_RATE * dur)
-    return array.array("h", (int(amp * math.sin(2 * math.pi * freq * i / SAMPLE_RATE))
-                             for i in range(n)))
-
-
 def save_wav(path: str, pcm: array.array) -> None:
     with wave.open(path, "wb") as w:
         w.setnchannels(1)

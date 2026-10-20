@@ -27,6 +27,16 @@ barge_in_min_speech = 0.3  # seconds of continuous speech needed to interrupt
 silence_end = 1.5        # seconds of VAD silence after speech => end of turn
 no_speech_timeout = 8.0  # give up if nothing is said within this time
 max_record = 20.0        # hard limit in seconds
+earcons = true           # waiting-feedback sounds (master switch)
+earcon_volume = 0.25     # 0-1
+beep = true              # short beep when the end of your input is detected
+beep_freq = 800          # Hz
+beep_duration = 0.12     # seconds
+melody = true            # looping pattern while the agent is working
+melody_delay = 0.4       # seconds to wait before the melody starts
+melody_notes = "A4,E5"   # note names (A4=440Hz, F#4, Bb3), "-" = rest; range G2-G7
+melody_note_duration = 0.3
+melody_gap = 2.0         # silence between repetitions
 
 [stt]                    # remote OpenAI-shaped speech-to-text
 base_url = "http://localhost:8000/v1"
