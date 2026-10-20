@@ -140,6 +140,16 @@ class ReminderStore:
 
         return self._run(operation, write=True)
 
+    def _set_next_try(self, reminder_id: int, next_try_at: int) -> Reminder | None:
+        def operation() -> Reminder | None:
+            self._conn.execute(
+                "UPDATE reminders SET next_try_at = ? WHERE id = ?",
+                (int(next_try_at), reminder_id),
+            )
+            return self._row(reminder_id)
+
+        return self._run(operation, write=True)
+
     def _set_status(self, reminder_id: int, status: str) -> Reminder | None:
         def operation() -> Reminder | None:
             self._conn.execute(
@@ -244,6 +254,15 @@ class ReminderStore:
         before ringing). Passing a time records the retry delay.
         """
         return await asyncio.to_thread(self._mark_attempt, reminder_id, next_try_at)
+
+    async def set_next_try(self, reminder_id: int, next_try_at: int) -> Reminder | None:
+        """Move ``next_try_at`` without touching ``attempts``.
+
+        Used by the scheduler for the "phone busy, try later" postponement and to
+        re-plan a retry, so an actual dial is the only thing that increments the
+        attempt counter.
+        """
+        return await asyncio.to_thread(self._set_next_try, reminder_id, next_try_at)
 
     async def mark_delivered(self, reminder_id: int) -> Reminder | None:
         """Mark a (one-shot) reminder ``done``."""

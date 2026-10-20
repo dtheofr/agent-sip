@@ -1,5 +1,6 @@
 """Assistant handler: listen -> STT -> agent (LLM) -> TTS, one conversation per call."""
 import array
+import inspect
 import logging
 from collections.abc import Callable
 
@@ -25,7 +26,10 @@ class AssistantHandler(CallHandler):
         vad = make_vad(self.audio)            # stateful: one per call
         log.info("[%s] assistant session started", tag)
         barged = None                         # caller audio captured by a barge-in
-        if self.greeting:
+        opening = call.metadata.get("opening")
+        if opening:
+            barged = await self._opening(call, agent, vad, opening, tag)
+        elif self.greeting:
             async with thinking(call, self.audio, beep=False):
                 pcm = await self._synth(self.greeting, tag)
             barged = await self._play(call, vad, pcm, tag)
@@ -56,6 +60,44 @@ class AssistantHandler(CallHandler):
                     reply_pcm = await self._synth(reply, tag)
             if reply_pcm is not None:
                 barged = await self._play(call, vad, reply_pcm, tag)
+
+    async def _opening(self, call: Call, agent: Agent, vad, opening: str,
+                       tag: str) -> array.array | None:
+        """Speak a scheduler-provided opening, then confirm delivery.
+
+        The opening is sent to the LLM as a tagged *user* message so the agent can
+        phrase it naturally; if the LLM (or its TTS) fails we fall back to the raw
+        reminder text so the reminder is never lost. Delivery is confirmed once
+        playback returns (completed *or* interrupted by a barge-in).
+        """
+        fallback = call.metadata.get("opening_fallback") or ""
+        pcm = None
+        async with thinking(call, self.audio, beep=False):
+            try:
+                reply = await agent.respond(opening)
+                log.info("[%s] opening reply: %r", tag, reply)
+            except Exception:
+                log.exception("[%s] opening LLM failed; speaking the raw reminder", tag)
+                reply = fallback
+            if reply:
+                pcm = await self._synth(reply, tag)
+            if pcm is None and fallback and fallback != reply:
+                pcm = await self._synth(fallback, tag)
+        barged = await self._play(call, vad, pcm, tag)
+        if pcm is not None:
+            await self._opening_done(call, tag)
+        return barged
+
+    async def _opening_done(self, call: Call, tag: str) -> None:
+        callback = call.metadata.get("on_opening_done")
+        if callback is None:
+            return
+        try:
+            result = callback()
+            if inspect.isawaitable(result):
+                await result
+        except Exception:
+            log.exception("[%s] on_opening_done failed", tag)
 
     async def _synth(self, text: str, tag: str) -> array.array | None:
         try:

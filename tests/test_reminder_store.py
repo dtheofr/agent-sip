@@ -122,6 +122,15 @@ class ReminderStoreTest(unittest.IsolatedAsyncioTestCase):
         updated = await self.store.mark_attempt(reminder.id)
         self.assertEqual((updated.attempts, updated.next_try_at), (2, 160))
 
+    async def test_set_next_try_moves_time_without_counting_attempt(self):
+        reminder = await self.add(due_at=100)
+        await self.store.mark_attempt(reminder.id, 130)
+        updated = await self.store.set_next_try(reminder.id, 200)
+        self.assertEqual((updated.attempts, updated.next_try_at), (1, 200))
+        # the due_at is untouched; only next_try_at moves
+        self.assertEqual(updated.due_at, 100)
+        self.assertIsNone(await self.store.set_next_try(999_999, 1))
+
     async def test_mark_delivered_and_missed(self):
         delivered = await self.add()
         missed = await self.add()

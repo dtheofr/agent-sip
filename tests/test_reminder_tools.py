@@ -35,6 +35,7 @@ class FakeCall:
         self.call_id = cid
         self.phone = phone
         self.active = False
+        self.metadata = {}
 
 
 class ReminderToolsTest(unittest.IsolatedAsyncioTestCase):
@@ -189,9 +190,10 @@ class WiringTest(unittest.IsolatedAsyncioTestCase):
             cfg = Config()
             cfg.tools.reminders.enabled = False
             cfg.db.path = str(Path(tmp) / "reminders.db")
-            handler, store, conn = build_app(cfg, "")
+            handler, store, conn, scheduler = build_app(cfg, "")
             self.assertIsNone(store)
             self.assertIsNone(conn)
+            self.assertIsNone(scheduler)
             self.assertFalse(Path(cfg.db.path).exists())
 
             agent = handler.agent_factory(FakeCall(phone=None))
@@ -205,8 +207,9 @@ class WiringTest(unittest.IsolatedAsyncioTestCase):
             cfg.audio.vad = "energy"
             cfg.db.path = str(Path(tmp) / "reminders.db")
             cfg.phones = [PhoneConfig(name="p")]
-            handler, store, conn = build_app(cfg, "")
+            handler, store, conn, scheduler = build_app(cfg, "")
             self.addCleanup(conn.close)
+            self.assertIsNotNone(scheduler)
             self.assertTrue(Path(cfg.db.path).exists())
 
             agent = handler.agent_factory(FakeCall(phone="p"))
@@ -222,7 +225,7 @@ class WiringTest(unittest.IsolatedAsyncioTestCase):
             cfg.llm.greeting = ""
             cfg.db.path = str(Path(tmp) / "reminders.db")
             cfg.phones = [PhoneConfig(name="a"), PhoneConfig(name="b")]
-            handler, store, conn = build_app(cfg, "")
+            handler, store, conn, _scheduler = build_app(cfg, "")
             self.addCleanup(conn.close)
 
             seen = []

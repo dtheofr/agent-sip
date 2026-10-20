@@ -3,9 +3,17 @@ import array
 import asyncio
 import socket
 import struct
+import tempfile
+import time
 import unittest
+from pathlib import Path
 
-from agent_sip.config import PhoneConfig, SipConfig
+from agent_sip.assistant import AssistantHandler
+from agent_sip.config import AudioConfig, PhoneConfig, RemindersConfig, SipConfig
+from agent_sip.db import connect, migrate
+from agent_sip.db.migrations import MIGRATIONS
+from agent_sip.reminders.scheduler import ReminderScheduler
+from agent_sip.reminders.store import ReminderStore
 from agent_sip.sip import Call, CallHandler, SipServer, g711
 from agent_sip.sip.message import SipMessage, build_response, parse
 from agent_sip.sip.sdp import build_sdp, parse_rtp_target
@@ -285,6 +293,91 @@ class Incoming(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rec["metadata"], {})
         self.assertTrue(rec["answered"])
         self.assertTrue(rec["call"].answered.is_set())
+
+
+class _FakeTranscriber:
+    async def transcribe(self, pcm, sample_rate: int = 8000) -> str:
+        return ""
+
+
+class _FakeSynth:
+    def __init__(self) -> None:
+        self.texts: list[str] = []
+
+    async def synthesize(self, text: str) -> array.array:
+        self.texts.append(text)
+        return array.array("h", [1000] * 160)
+
+
+class _FakeAgent:
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    async def respond(self, text: str) -> str:
+        self.calls.append(text)
+        return "Reminder: call the dentist"
+
+
+class ReminderIntegration(unittest.IsolatedAsyncioTestCase):
+    """Real SIP server + fake phone UA + fake LLM/TTS, driven by the scheduler."""
+
+    async def test_due_reminder_rings_answers_and_ends_done(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            conn = connect(Path(tmp) / "integration.db")
+            migrate(conn, MIGRATIONS)
+            store = ReminderStore(conn)
+            loop = asyncio.get_running_loop()
+            phone = FakePhone(loop)
+            sip_port = 55400
+            cfg = SipConfig(local_ip="127.0.0.1", bind_host="127.0.0.1", port=sip_port,
+                            rtp_port_min=55420, rtp_port_max=55460)
+            audio = AudioConfig(vad="energy", barge_in=False, earcons=False,
+                                no_speech_timeout=0.2, silence_end=0.1, max_record=1.0)
+            synth = _FakeSynth()
+            agent = _FakeAgent()
+            handler = AssistantHandler(audio, _FakeTranscriber(), synth, lambda call: agent)
+            server = SipServer(cfg, handler, phones=[
+                PhoneConfig(name="phone", ip="127.0.0.1", port=phone.port, user="phone")])
+            scheduler = ReminderScheduler(
+                store,
+                RemindersConfig(ring_timeout=2.0, retry_attempts=2,
+                                retry_interval=60.0, max_late=3600.0, timezone="UTC"),
+                server,
+            )
+            await server.start()
+            phone.server_addr = ("127.0.0.1", sip_port)
+
+            async def cleanup():
+                await scheduler.stop()
+                await server.stop()
+                phone.close()
+                conn.close()
+
+            self.addAsyncCleanup(cleanup)
+
+            now = int(time.time())
+            reminder = await store.add("call the dentist", now, tz="UTC", phone="phone",
+                                       next_try_at=now, created_at=now)
+            await scheduler.start()
+
+            invite = await phone.expect("INVITE", timeout=5)
+            phone.answer(invite)
+            await asyncio.sleep(0.05)
+            active = next(iter(server.calls.values()))
+            self.assertEqual(active.metadata["reminder"].id, reminder.id)
+
+            deadline = time.monotonic() + 5
+            row = None
+            while time.monotonic() < deadline:
+                row = await store.get(reminder.id)
+                if row is not None and row.status == "done":
+                    break
+                await asyncio.sleep(0.02)
+            self.assertIsNotNone(row)
+            self.assertEqual(row.status, "done")
+            self.assertEqual(synth.texts, ["Reminder: call the dentist"])
+            self.assertTrue(agent.calls[0].startswith("[REMINDER]"))
+            self.assertIn("call the dentist", agent.calls[0])
 
 
 if __name__ == "__main__":
