@@ -4,7 +4,7 @@ import logging
 import os
 
 from .config import load_config
-from .agent import OpenAIChatAgent, load_system_prompt
+from .agent import OpenAIChatAgent, ToolRegistry, load_system_prompt, registry, web_tools
 from .assistant import AssistantHandler
 from .sip import SipServer
 from .stt import OpenAITranscriber
@@ -14,8 +14,9 @@ from .tts import OpenAISynthesizer
 async def run(args) -> None:
     cfg = load_config(args.config)
     prompt = load_system_prompt(cfg.llm.system_prompt_file)   # read once at startup
+    tools = ToolRegistry(list(registry._tools.values()) + web_tools(cfg.tools))
     handler = AssistantHandler(cfg.audio, OpenAITranscriber(cfg.stt), OpenAISynthesizer(cfg.tts),
-                               lambda: OpenAIChatAgent(cfg.llm, prompt), cfg.llm.greeting)
+                               lambda: OpenAIChatAgent(cfg.llm, prompt, tools), cfg.llm.greeting)
     server = SipServer(cfg.sip, handler, cfg.phones)
     await server.start()
     print(f"Ready on {server.local_ip}:{cfg.sip.port}. Lift the handset! (Ctrl+C to quit)")

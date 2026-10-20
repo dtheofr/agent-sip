@@ -64,3 +64,13 @@ system_prompt_file = "prompts/system.md"    # edit this file to change the agent
 greeting = "Hello! How can I help?"         # spoken when the handset is lifted; "" = none
 timeout = 60.0
 extra = {}               # custom JSON fields, e.g. { temperature = 0.7, max_tokens = 200 }
+
+[tools]                  # web tools; the LLM calls them on demand
+tavily_api_key = ""      # or AGENT_SIP_TOOLS_TAVILY_API_KEY; empty = no web_search tool
+tavily_base_url = "https://api.tavily.com"
+search_max_results = 3
+search_depth = "basic"   # "basic" or "advanced"
+fetch_enabled = true     # fetch_url tool (public http/https only; private/LAN addresses blocked)
+fetch_max_chars = 4000   # text returned to the LLM is truncated to this
+fetch_max_bytes = 1000000
+timeout = 15.0

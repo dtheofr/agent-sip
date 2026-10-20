@@ -25,7 +25,7 @@ def load_system_prompt(path: str) -> str:
 class OpenAIChatAgent:
     """One instance = one conversation (keeps history). Create one per call."""
 
-    MAX_TOOL_ROUNDS = 5
+    MAX_TOOL_ROUNDS = 8
 
     def __init__(self, cfg: LlmConfig, system_prompt: str = "",
                  tools: ToolRegistry | None = None) -> None:

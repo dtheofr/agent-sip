@@ -93,12 +93,26 @@ class LlmConfig:
 
 
 @dataclass
+class ToolsConfig:
+    """Web tools for the agent: web_search (Tavily) and fetch_url (local)."""
+    tavily_api_key: str = ""          # empty = web_search disabled
+    tavily_base_url: str = "https://api.tavily.com"
+    search_max_results: int = 3
+    search_depth: str = "basic"       # basic | advanced
+    fetch_enabled: bool = True
+    fetch_max_chars: int = 4000       # truncate text returned to the LLM
+    fetch_max_bytes: int = 1000000    # download cap
+    timeout: float = 15.0
+
+
+@dataclass
 class Config:
     sip: SipConfig = field(default_factory=SipConfig)
     audio: AudioConfig = field(default_factory=AudioConfig)
     stt: SttConfig = field(default_factory=SttConfig)
     tts: TtsConfig = field(default_factory=TtsConfig)
     llm: LlmConfig = field(default_factory=LlmConfig)
+    tools: ToolsConfig = field(default_factory=ToolsConfig)
     phones: list[PhoneConfig] = field(default_factory=list)  # [[phones]] tables; no env override
 
 
