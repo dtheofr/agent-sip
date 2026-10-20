@@ -9,7 +9,7 @@ import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
 
-from ..config import ToolsConfig
+from ..config import WebToolsConfig
 from .tools import Tool
 
 UA = "Mozilla/5.0 (compatible; agent-sip/0.1)"
@@ -73,7 +73,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def _fetch(url: str, cfg: ToolsConfig, check=check_public_url) -> str:
+def _fetch(url: str, cfg: WebToolsConfig, check=check_public_url) -> str:
     opener = urllib.request.build_opener(_NoRedirect)   # follow redirects manually, re-checking
     for _ in range(MAX_REDIRECTS + 1):
         check(url)
@@ -100,7 +100,7 @@ def _fetch(url: str, cfg: ToolsConfig, check=check_public_url) -> str:
     raise RuntimeError("too many redirects")
 
 
-def _search(query: str, cfg: ToolsConfig) -> str:
+def _search(query: str, cfg: WebToolsConfig) -> str:
     payload = {"query": query, "max_results": cfg.search_max_results,
                "search_depth": cfg.search_depth, "include_answer": True}
     req = urllib.request.Request(
@@ -120,7 +120,7 @@ def _search(query: str, cfg: ToolsConfig) -> str:
     return "\n".join(lines) or "no results"
 
 
-def web_tools(cfg: ToolsConfig, check=check_public_url) -> list[Tool]:
+def web_tools(cfg: WebToolsConfig, check=check_public_url) -> list[Tool]:
     """Tools enabled by config. `check` is the URL guard (override only in tests)."""
     tools = []
     if cfg.tavily_api_key:

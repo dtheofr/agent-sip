@@ -14,7 +14,7 @@ from .tts import OpenAISynthesizer
 async def run(args) -> None:
     cfg = load_config(args.config)
     prompt = load_system_prompt(cfg.llm.system_prompt_file)   # read once at startup
-    tools = ToolRegistry(list(registry._tools.values()) + web_tools(cfg.tools))
+    tools = ToolRegistry(list(registry._tools.values()) + web_tools(cfg.tools.web))
     handler = AssistantHandler(cfg.audio, OpenAITranscriber(cfg.stt), OpenAISynthesizer(cfg.tts),
                                lambda: OpenAIChatAgent(cfg.llm, prompt, tools), cfg.llm.greeting)
     server = SipServer(cfg.sip, handler, cfg.phones)

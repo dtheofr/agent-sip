@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from agent_sip.agent import ToolRegistry, web_tools
 from agent_sip.agent.web_tools import html_to_text
-from agent_sip.config import ToolsConfig
+from agent_sip.config import WebToolsConfig
 
 seen = []
 HTML = b"<html><head><title>x</title></head><body><script>bad()</script><p>Hello</p><p>World</p></body></html>"
@@ -51,16 +51,16 @@ class WebToolsTest(unittest.IsolatedAsyncioTestCase):
         cls.srv.shutdown()
 
     def test_registration(self):
-        names = [t.name for t in web_tools(ToolsConfig())]
+        names = [t.name for t in web_tools(WebToolsConfig())]
         self.assertEqual(names, ["fetch_url"])
-        names = [t.name for t in web_tools(ToolsConfig(tavily_api_key="k", fetch_enabled=False))]
+        names = [t.name for t in web_tools(WebToolsConfig(tavily_api_key="k", fetch_enabled=False))]
         self.assertEqual(names, ["web_search"])
 
     def test_html_to_text(self):
         self.assertEqual(html_to_text(HTML.decode()), "Hello\nWorld")
 
     async def test_search(self):
-        cfg = ToolsConfig(tavily_api_key="k", tavily_base_url=self.base)
+        cfg = WebToolsConfig(tavily_api_key="k", tavily_base_url=self.base)
         reg = ToolRegistry(web_tools(cfg))
         out = await reg.call("web_search", '{"query": "life"}')
         self.assertIn("Answer: 42", out)
@@ -70,14 +70,14 @@ class WebToolsTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_fetch(self):
         # guard disabled so the loopback fake server is reachable
-        cfg = ToolsConfig(fetch_max_chars=8)
+        cfg = WebToolsConfig(fetch_max_chars=8)
         reg = ToolRegistry(web_tools(cfg, check=lambda u: None))
         self.assertEqual(await reg.call("fetch_url", {"url": self.base + "/"}),
                          "Hello\nWo [truncated]")
         self.assertIn("unsupported", await reg.call("fetch_url", {"url": self.base + "/bin"}))
 
     async def test_ssrf_guard(self):
-        reg = ToolRegistry(web_tools(ToolsConfig()))
+        reg = ToolRegistry(web_tools(WebToolsConfig()))
         for url in (self.base + "/", "http://192.168.1.1/", "file:///etc/passwd",
                     "http://localhost/"):
             self.assertTrue((await reg.call("fetch_url", {"url": url})).startswith("error:"), url)
@@ -86,7 +86,7 @@ class WebToolsTest(unittest.IsolatedAsyncioTestCase):
         def check(u):
             if "192.168" in u:
                 raise ValueError("private")
-        reg = ToolRegistry(web_tools(ToolsConfig(), check=check))
+        reg = ToolRegistry(web_tools(WebToolsConfig(), check=check))
         out = await reg.call("fetch_url", {"url": self.base + "/redir"})
         self.assertIn("private", out)
 

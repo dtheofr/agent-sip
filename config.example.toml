@@ -65,8 +65,11 @@ greeting = "Hello! How can I help?"         # spoken when the handset is lifted;
 timeout = 60.0
 extra = {}               # custom JSON fields, e.g. { temperature = 0.7, max_tokens = 200 }
 
-[tools]                  # web tools; the LLM calls them on demand
-tavily_api_key = ""      # or AGENT_SIP_TOOLS_TAVILY_API_KEY; empty = no web_search tool
+[db]                     # shared SQLite state (created on first use; keep the directory out of git)
+path = "data/agent-sip.db"   # or AGENT_SIP_DB_PATH
+
+[tools.web]              # web tools; the LLM calls them on demand
+tavily_api_key = ""      # or AGENT_SIP_TOOLS_WEB_TAVILY_API_KEY; empty = no web_search tool
 tavily_base_url = "https://api.tavily.com"
 search_max_results = 3
 search_depth = "basic"   # "basic" or "advanced"
@@ -74,3 +77,13 @@ fetch_enabled = true     # fetch_url tool (public http/https only; private/LAN a
 fetch_max_chars = 4000   # text returned to the LLM is truncated to this
 fetch_max_bytes = 1000000
 timeout = 15.0
+
+[tools.reminders]        # reminders: tool calls ring the phone when one is due
+enabled = true           # requires at least one [[phones]] entry
+timezone = ""            # IANA name, e.g. "Europe/Berlin"; empty = system local
+default_phone = ""       # fallback when a call has no known phone; empty = first [[phones]]
+ring_timeout = 30.0      # seconds before cancelling an unanswered reminder call
+retry_attempts = 3       # total calls per occurrence
+retry_interval = 300.0   # seconds between attempts
+max_late = 3600.0        # fire up to this late after downtime, then mark missed
+keep_days = 7            # retention of done/missed reminders
