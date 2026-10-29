@@ -1,5 +1,7 @@
 # agent-sip
 
+[![Version](https://img.shields.io/github/v/release/dtheofr/agent-sip?label=version&sort=semver)](https://github.com/dtheofr/agent-sip/releases)
+
 Talk to one or many AI agents from a phone (e.g. an analog phone behind a Linksys/ATA) through SIP.
 
 Pipeline (target): `phone ⇄ SIP/RTP ⇄ STT → Agent → TTS ⇄ phone`
