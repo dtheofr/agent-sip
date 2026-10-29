@@ -1,35 +1,44 @@
 <!--
-Please keep the title in Conventional Commits form, e.g.
-  feat(sessions): resume conversations between calls
-  fix(sip): retransmit 200 OK until ACK
+You are viewing the default pull request template.
+
+Pick the template that matches your change:
+  1. Click one of the links below (opens a new pull request pre-filled with that template), or
+  2. Use the "Choose a template" dropdown when creating the pull request.
+
+If you are an agent filling this in: choose the single best-matching template, open every
+<details> block, replace every placeholder, then delete the guidance comments.
 -->
 
-## Summary
+# Choose a pull request template
 
-<!-- What does this change do, and why? -->
+> **TL;DR** — Pick the template that matches the *kind of work*, not the file you touched. Each
+> one keeps the top of the PR skimmable for a reviewer who lacks context, with the long-form
+> detail collapsed below.
 
-## Related issues
+| Kind of work | Use when… | Template |
+|---|---|---|
+| Feature | New capability or user-visible behavior (`feat:`) | [**Open feature template**](?template=feature.md&expand=1) |
+| Bug fix | Something is broken (`fix:`) | [**Open bugfix template**](?template=bugfix.md&expand=1) |
+| Documentation | README, `docs/`, `AGENTS.md`, docstrings (`docs:`) | [**Open docs template**](?template=docs.md&expand=1) |
+| Refactor / performance | No behavior change intended (`refactor:`/`perf:`) | [**Open refactor template**](?template=refactor.md&expand=1) |
+| Tests | Test-only changes (`test:`) | [**Open test template**](?template=test.md&expand=1) |
+| CI / build / release | Workflows, packaging, release tooling (`ci:`/`build:`) | [**Open CI template**](?template=ci.md&expand=1) |
+| Chore / deps / config | Dependency bumps, tooling, defaults (`chore:`) | [**Open chore template**](?template=chore.md&expand=1) |
+| Revert | Undoing a merged change (`revert:`) | [**Open revert template**](?template=revert.md&expand=1) |
 
-<!-- e.g. Closes #12 -->
+## Not sure which to pick?
 
-## Type of change
+- If it **adds behavior** → **Feature**.
+- If it **restores behavior** → **Bug fix**.
+- If behavior is **unchanged** → **Refactor**.
+- If it **only touches docs/tests/pipelines/deps** → the matching one.
 
-- [ ] Bug fix (`fix:`)
-- [ ] New feature (`feat:`)
-- [ ] Documentation (`docs:`)
-- [ ] Refactor / chore (`refactor:`, `chore:`)
-- [ ] CI / build (`ci:`, `build:`)
-- [ ] Breaking change
+## Every PR must
 
-## Checklist
+- Pass `make test` and `make lint`.
+- Be based on an up-to-date `main`, with a **Conventional Commits** title
+  (`feat:`, `fix:`, `docs:`, `refactor:`, `perf:`, `test:`, `ci:`, `build:`, `chore:`, `revert:`).
+- Update `CHANGELOG.md` under `[Unreleased]` when the change is user-visible.
+- Avoid committing secrets — `config.toml` stays untracked.
 
-- [ ] `make test` passes
-- [ ] `make lint` is clean
-- [ ] User-visible changes are in `CHANGELOG.md` under `[Unreleased]`
-- [ ] Tests added/updated where practical
-- [ ] Docs/README updated if behavior or config changed
-- [ ] No secrets or real credentials committed (`config.toml` stays untracked)
-
-## Notes for reviewers
-
-<!-- Anything specific you want a second pair of eyes on? -->
+_`main` is protected: a PR needs at least one approval and green CI before merge._

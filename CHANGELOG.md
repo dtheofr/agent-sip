@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Project hygiene for open-source collaboration: Apache-2.0 license, contributing and
-  security guides, code of conduct, pull request and issue templates, CODEOWNERS and
-  Dependabot configuration.
+  security guides, code of conduct, type-specific pull request templates, issue forms,
+  CODEOWNERS and Dependabot configuration.
 
 ## [0.8.0] - 2026-10-29
 

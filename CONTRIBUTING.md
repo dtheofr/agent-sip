@@ -46,6 +46,12 @@ chore(release): prepare 0.9.0
 
 Keep pull requests focused. One logical change per PR is easier to review and revert.
 
+When you open the PR, choose the template that matches the **kind of work** — feature, bug
+fix, docs, refactor/performance, tests, CI/build/release, chore/dependencies, or revert. Each
+template keeps the top of the description skimmable for a reviewer who lacks context and
+asks for the details (root cause, risk, verification, how to review) in collapsible sections
+below.
+
 ## Versioning and releases
 
 - `src/agent_sip/__init__.py` holds the single `__version__`; `pyproject.toml` reads it
