@@ -1,6 +1,9 @@
 # agent-sip
 
+[![CI](https://github.com/dtheofr/agent-sip/actions/workflows/ci.yml/badge.svg)](https://github.com/dtheofr/agent-sip/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/release/dtheofr/agent-sip?label=version&sort=semver)](https://github.com/dtheofr/agent-sip/releases)
+[![License](https://img.shields.io/github/license/dtheofr/agent-sip)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
 
 Talk to one or many AI agents from a phone (e.g. an analog phone behind a Linksys/ATA) through SIP.
 
@@ -71,3 +74,13 @@ hung up when it returns. `SipServer.originate("name")` rings a phone declared in
 Incoming calls from a declared phone's IP get `call.phone = "name"`.
 
 Limitations: UDP only, no auth/registration, PCMU only, no 200-OK retransmission timers.
+
+## Contributing
+
+`main` is protected: changes land through a pull request with at least one approval and green
+CI. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, commit conventions and the review
+process, and [`SECURITY.md`](SECURITY.md) to report a vulnerability privately.
+
+## License
+
+Released under the [Apache-2.0](LICENSE) license.
