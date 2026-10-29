@@ -1,34 +1,36 @@
 <!--
-Template: Feature
+Template: ✨ Feature
 Title format:  feat(<scope>): <imperative summary>
 Example:       feat(sessions): resume conversations between calls
 Fill every section, then delete these comments.
 Keep the TL;DR to 1-3 plain-language sentences: what a user can now do, and what changed.
 -->
 
-## At a glance
+## 🧭 At a glance
 
 | | |
 |---|---|
-| **Type** | Feature (`feat:`) |
-| **Area** | `sip` / `audio` / `stt` / `tts` / `agent` / `assistant` / `config` / `tools` |
-| **Risk** | Low |
-| **Breaking change** | No |
-| **Closes** | # |
+| ✨ **Type** | Feature (`feat:`) |
+| 🧩 **Area** | `sip` · `audio` · `stt` · `tts` · `agent` · `assistant` · `config` · `tools` |
+| 🚦 **Risk** | 🟢 Low |
+| 💥 **Breaking change** | No |
+| 🔗 **Closes** | # |
 
-> **TL;DR** —
-> _One to three sentences a reviewer can read cold: what the caller/user can now do,
-> what was added, and whether it is on by default._
+> [!TIP]
+> **TL;DR** — _One to three sentences a reviewer can read cold: what the caller/user can now
+> do, what was added, and whether it is on by default._
 
-## Summary
+---
+
+## 📝 Summary
 
 _What problem does this solve, and for whom? Write it as if the reviewer has never seen the
 task. Avoid jargon or define it on first use._
 
-### Background
+### 🧠 Background
 
 <details>
-<summary>Context a reviewer without prior knowledge should have (expand)</summary>
+<summary>🧠 Context a reviewer without prior knowledge should have (expand)</summary>
 
 - _Why this matters now / what prompted it._
 - _Any related design notes in `docs/`, prior PRs, or issues._
@@ -36,21 +38,25 @@ task. Avoid jargon or define it on first use._
 
 </details>
 
-## What changed
+---
 
-- **Added:** _new modules, config, handlers, tools…_
-- **Changed:** _behavior or APIs that moved._
-- **Removed:** _anything deleted and why._
+## 🔧 What changed
 
-### Files of interest
+- ➕ **Added:** _new modules, config, handlers, tools…_
+- 🔁 **Changed:** _behavior or APIs that moved._
+- ➖ **Removed:** _anything deleted and why._
 
-| Path | What to look at |
+### 📂 Files of interest
+
+| Path | 👀 What to look at |
 |---|---|
-| `src/agent_sip/...` | _…_ |
-| `tests/...` | _…_ |
-| `docs/...` | _…_ |
+| `src/agent_sip/…` | _…_ |
+| `tests/…` | _…_ |
+| `docs/…` | _…_ |
 
-## How it works
+---
+
+## 🛠 How it works
 
 _Explain the design and data flow. Mention alternatives you rejected and why. For signalling
 or audio changes, describe the sequence end to end (a diagram or trace helps)._
@@ -59,15 +65,17 @@ or audio changes, describe the sequence end to end (a diagram or trace helps)._
 phone ⇄ SIP/RTP ⇄ STT → Agent → TTS ⇄ phone
 ```
 
-**Key decisions**
+**🔑 Key decisions**
 
 - _Decision — rationale, trade-off._
 
-**Edge cases handled**
+**🧯 Edge cases handled**
 
 - _e.g. concurrent calls, remote hangup mid-prompt, empty transcript._
 
-## Configuration
+---
+
+## ⚙️ Configuration
 
 _Delete this section if nothing is configurable._
 
@@ -78,9 +86,11 @@ _Delete this section if nothing is configurable._
 - [ ] Added to the settings dataclass in `src/agent_sip/config.py`
 - [ ] Documented in `config.example.toml`
 
-## Testing
+---
 
-**Automated**
+## 🧪 Testing
+
+**🤖 Automated**
 
 ```sh
 make test
@@ -89,24 +99,32 @@ make lint
 
 Result: _e.g. 153 tests OK; ruff clean._
 
-**Manual / end-to-end**
+**📞 Manual / end-to-end**
 
 1. _Steps to exercise the feature (config, dialing, expected audio/behavior)._
 2. _…_
 
-## How to review
+---
 
-1. _Start with `…` — this is the heart of the change._
-2. _Then check `…` for correctness._
-3. _Scrutinize `…` (concurrency, error paths, cleanup)._
+## 🔍 How to review
 
-## Risk, rollout & rollback
+1. 🎯 _Start with `…` — this is the heart of the change._
+2. 🔎 _Then check `…` for correctness._
+3. 🧐 _Scrutinize `…` (concurrency, error paths, cleanup)._
 
-- **Risk:** _what could go wrong, who is affected._
-- **Rollout:** _default on/off, migration, feature flag._
-- **Rollback:** _revert this PR — describe any cleanup/migration needed (or "none")._
+---
 
-## Checklist
+## ⚠️ Risk, rollout & rollback
+
+| | |
+|---|---|
+| 🚨 **Risk** | _what could go wrong, who is affected._ |
+| 🚀 **Rollout** | _default on/off, migration, feature flag._ |
+| ⏪ **Rollback** | _revert this PR — describe any cleanup/migration needed (or "none")._ |
+
+---
+
+## ✅ Checklist
 
 - [ ] `make test` passes
 - [ ] `make lint` is clean
@@ -116,7 +134,9 @@ Result: _e.g. 153 tests OK; ruff clean._
 - [ ] `config.example.toml` and the config dataclass updated (if config changed)
 - [ ] No secrets or real credentials committed (`config.toml` stays untracked)
 
-## References
+---
 
-- Related issue/PR: #
-- Design note: `docs/…`
+## 📎 References
+
+- 🔗 Related issue/PR: #
+- 📄 Design note: `docs/…`
