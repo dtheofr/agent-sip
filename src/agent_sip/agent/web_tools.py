@@ -9,10 +9,11 @@ import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
 
+from .. import __version__
 from ..config import WebToolsConfig
 from .tools import Tool
 
-UA = "Mozilla/5.0 (compatible; agent-sip/0.1)"
+UA = f"Mozilla/5.0 (compatible; agent-sip/{__version__})"
 MAX_REDIRECTS = 5
 TEXT_TYPES = ("text/", "application/json", "application/xhtml+xml", "application/xml")
 SKIP_TAGS = {"script", "style", "head", "nav", "footer", "svg", "noscript", "template"}

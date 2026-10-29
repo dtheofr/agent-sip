@@ -1,6 +1,6 @@
 [project]
 name = "agent-sip"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Talk to one or many AI agents from a phone through SIP"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,6 +20,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "agent_sip.__version__" }
 
 [tool.ruff]
 line-length = 100

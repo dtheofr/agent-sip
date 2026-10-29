@@ -4,6 +4,7 @@ import logging
 import os
 import sqlite3
 
+from . import __version__
 from .agent import OpenAIChatAgent, ToolRegistry, load_system_prompt, registry, web_tools
 from .assistant import AssistantHandler
 from .config import Config, load_config
@@ -70,7 +71,8 @@ async def run(args) -> None:
     await server.start()
     if scheduler is not None:
         await scheduler.start()
-    print(f"Ready on {server.local_ip}:{cfg.sip.port}. Lift the handset! (Ctrl+C to quit)")
+    print(f"agent-sip {__version__} ready on {server.local_ip}:{cfg.sip.port}. "
+          "Lift the handset! (Ctrl+C to quit)")
     try:
         await asyncio.Event().wait()
     finally:
@@ -83,6 +85,7 @@ async def run(args) -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="agent-sip", description=__doc__)
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     p.add_argument("--config", default="config.toml" if os.path.exists("config.toml") else None,
                    help="TOML config file (default: ./config.toml if present)")
     p.add_argument("-v", "--verbose", action="store_true")

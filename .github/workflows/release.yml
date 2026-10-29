@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+# Publishing a GitHub Release verifies the tag, builds and attaches the distribution,
+# then deploys the release commit to the server. The deploy job only runs when the
+# release build succeeds.
+jobs:
+  build:
+    name: Build and attach
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify release tag matches package version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          tag = os.environ["TAG"]
+          source = Path("src/agent_sip/__init__.py").read_text()
+          match = re.search(r'^__version__ = "([^"]+)"$', source, re.MULTILINE)
+          if match is None:
+              raise SystemExit("could not read __version__")
+          expected = f"v{match.group(1)}"
+          if tag != expected:
+              raise SystemExit(f"release tag {tag!r} does not match package version {expected!r}")
+          PY
+
+      - name: Build distribution
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+
+      - name: Attach distribution to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh release upload "$TAG" dist/* --clobber
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    env:
+      DEPLOY_TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      DEPLOY_SHA: ${{ github.sha }}
+    steps:
+      # Server prerequisites (one-time):
+      #   - a clone of this repo at $DEPLOY_PATH (deploy key or https token), with
+      #     config.toml present (untracked, so deploys never touch it)
+      #   - make, curl and python3-venv available
+      #   - a systemd unit named `agent-sip` that runs $DEPLOY_PATH/.venv/bin/agent-sip
+      #   - passwordless sudo for `systemctl restart agent-sip`
+      - name: Set up SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Update checkout and install deps
+        run: |
+          ssh "$DEPLOY_TARGET" "
+            set -e
+            cd '$DEPLOY_PATH'
+            git fetch --prune --tags origin
+            git checkout --force '$DEPLOY_SHA'
+            make install
+          "
+
+      - name: Restart service
+        run: ssh "$DEPLOY_TARGET" "sudo systemctl restart agent-sip"

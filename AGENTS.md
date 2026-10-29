@@ -19,6 +19,14 @@ Guidance for coding agents working on agent-sip.
 - Core stays stdlib-only; heavy deps go in optional extras in `pyproject.toml`.
 - Python ≥ 3.11, ruff line length 100.
 
+## Versioning
+- SemVer. `__version__` in `src/agent_sip/__init__.py` is the single source of truth;
+  `pyproject.toml` reads it dynamically. Never edit a version in two places.
+- Add user-visible changes to `CHANGELOG.md` under `[Unreleased]`.
+- Release: move the changelog section to the new version, bump `__version__`, commit, then
+  publish a GitHub Release tagged `vX.Y.Z`. The release workflow verifies the tag, attaches
+  the build and then deploys that tag to the server.
+
 ## Commands
 - `make test` — unittest suite (includes a loopback SIP call). Run before finishing.
 - `make lint`, `make run`.

@@ -1,5 +1,7 @@
 # agent-sip
 
+[![Version](https://img.shields.io/github/v/release/dtheofr/agent-sip?label=version&sort=semver)](https://github.com/dtheofr/agent-sip/releases)
+
 Talk to one or many AI agents from a phone (e.g. an analog phone behind a Linksys/ATA) through SIP.
 
 Pipeline (target): `phone ⇄ SIP/RTP ⇄ STT → Agent → TTS ⇄ phone`
@@ -27,6 +29,14 @@ make help
 
 Open UDP 5060 (SIP) and the RTP range (default 10000–10100) in your firewall, and point
 the phone/ATA's SIP proxy/dial plan at this machine.
+
+## Versioning
+
+The package version is defined once in `src/agent_sip/__init__.py` (`__version__`) and read
+dynamically by `pyproject.toml`; `agent-sip --version` prints it. Releases follow
+[Semantic Versioning](https://semver.org/) and are published as GitHub Releases tagged
+`vX.Y.Z`; publishing a release attaches the built distribution and deploys that tag.
+User-visible changes are recorded in `CHANGELOG.md`.
 
 ## Configuration
 
