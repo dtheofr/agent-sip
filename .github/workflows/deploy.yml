@@ -1,10 +1,8 @@
 name: Deploy
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -13,9 +11,9 @@ concurrency:
   group: deploy
   cancel-in-progress: false
 
-# Runs after a successful CI run for a push to main. The service is deployed by
-# updating an existing checkout on the server to the exact commit CI tested,
-# reinstalling the venv deps, and restarting the systemd unit.
+# Publishing a GitHub Release deploys the tagged commit. The service is deployed by
+# updating an existing checkout on the server to that exact commit, reinstalling the
+# venv deps, and restarting the systemd unit.
 #
 # Server prerequisites (one-time):
 #   - a clone of this repo at $DEPLOY_PATH (deploy key or https token), with
@@ -28,13 +26,10 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push'
     env:
       DEPLOY_TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+      DEPLOY_SHA: ${{ github.sha }}
     steps:
       - name: Set up SSH
         env:
@@ -52,7 +47,7 @@ jobs:
           ssh "$DEPLOY_TARGET" "
             set -e
             cd '$DEPLOY_PATH'
-            git fetch --prune origin
+            git fetch --prune --tags origin
             git checkout --force '$DEPLOY_SHA'
             make install
           "

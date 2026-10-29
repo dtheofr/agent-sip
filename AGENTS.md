@@ -25,7 +25,7 @@ Guidance for coding agents working on agent-sip.
 - Add user-visible changes to `CHANGELOG.md` under `[Unreleased]`.
 - Release: move the changelog section to the new version, bump `__version__`, commit, then
   publish a GitHub Release tagged `vX.Y.Z`. The release workflow verifies the tag and
-  attaches the build to the release.
+  attaches the build; the deploy workflow deploys that tag to the server.
 
 ## Commands
 - `make test` — unittest suite (includes a loopback SIP call). Run before finishing.
