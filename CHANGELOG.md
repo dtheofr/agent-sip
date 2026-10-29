@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reads it dynamically.
 - `agent-sip --version` reports the package version, and the startup banner includes it.
 - The web tools' HTTP `User-Agent` is derived from the package version.
-- Versioning and release plumbing: changelog, tags, a GitHub Release workflow that attaches
-  the built distribution, and deployment on release publication instead of every push to
+- Versioning and release plumbing: changelog, tags, and a GitHub Release workflow that
+  verifies the tag, attaches the build and deploys it instead of deploying every push to
   `main`.
 
 ## [0.8.0] - 2026-10-29

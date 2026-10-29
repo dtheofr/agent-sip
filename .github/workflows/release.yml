@@ -7,11 +7,11 @@ on:
 permissions:
   contents: write
 
-# Publishing a GitHub Release is the release marker. Creating the release also creates
-# the tag, and this workflow verifies the tag, builds the distribution and attaches it
-# to that release. The deploy workflow still follows pushes to main.
+# Publishing a GitHub Release verifies the tag, builds and attaches the distribution,
+# then deploys the release commit to the server. The deploy job only runs when the
+# release build succeeds.
 jobs:
-  release:
+  build:
     name: Build and attach
     runs-on: ubuntu-latest
     steps:
@@ -53,3 +53,45 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
         run: |
           gh release upload "$TAG" dist/* --clobber
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    env:
+      DEPLOY_TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      DEPLOY_SHA: ${{ github.sha }}
+    steps:
+      # Server prerequisites (one-time):
+      #   - a clone of this repo at $DEPLOY_PATH (deploy key or https token), with
+      #     config.toml present (untracked, so deploys never touch it)
+      #   - make, curl and python3-venv available
+      #   - a systemd unit named `agent-sip` that runs $DEPLOY_PATH/.venv/bin/agent-sip
+      #   - passwordless sudo for `systemctl restart agent-sip`
+      - name: Set up SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Update checkout and install deps
+        run: |
+          ssh "$DEPLOY_TARGET" "
+            set -e
+            cd '$DEPLOY_PATH'
+            git fetch --prune --tags origin
+            git checkout --force '$DEPLOY_SHA'
+            make install
+          "
+
+      - name: Restart service
+        run: ssh "$DEPLOY_TARGET" "sudo systemctl restart agent-sip"
