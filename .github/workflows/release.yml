@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+# Publishing a GitHub Release is the release marker. Creating the release also creates
+# the tag, and this workflow verifies the tag, builds the distribution and attaches it
+# to that release. The deploy workflow still follows pushes to main.
+jobs:
+  release:
+    name: Build and attach
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify release tag matches package version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          tag = os.environ["TAG"]
+          source = Path("src/agent_sip/__init__.py").read_text()
+          match = re.search(r'^__version__ = "([^"]+)"$', source, re.MULTILINE)
+          if match is None:
+              raise SystemExit("could not read __version__")
+          expected = f"v{match.group(1)}"
+          if tag != expected:
+              raise SystemExit(f"release tag {tag!r} does not match package version {expected!r}")
+          PY
+
+      - name: Build distribution
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+
+      - name: Attach distribution to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh release upload "$TAG" dist/* --clobber

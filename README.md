@@ -28,6 +28,14 @@ make help
 Open UDP 5060 (SIP) and the RTP range (default 10000–10100) in your firewall, and point
 the phone/ATA's SIP proxy/dial plan at this machine.
 
+## Versioning
+
+The package version is defined once in `src/agent_sip/__init__.py` (`__version__`) and read
+dynamically by `pyproject.toml`; `agent-sip --version` prints it. Releases follow
+[Semantic Versioning](https://semver.org/) and are published as GitHub Releases tagged
+`vX.Y.Z`; publishing a release attaches the built distribution. User-visible changes are
+recorded in `CHANGELOG.md`. Continuous deployment still follows `main`.
+
 ## Configuration
 
 `config.toml` (see `config.example.toml`), overridden by env vars
