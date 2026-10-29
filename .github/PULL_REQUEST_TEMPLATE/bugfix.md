@@ -17,7 +17,7 @@ not just the symptom.
 | ↩️ **Regression?** | Yes / No — introduced in `vX.Y.Z` / PR # |
 | 🔗 **Closes** | # |
 
-> [!TIP]
+> [!NOTE]
 > **TL;DR** — _What was broken, who hit it, and what now happens instead._
 
 ---

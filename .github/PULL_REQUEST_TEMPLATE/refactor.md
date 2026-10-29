@@ -15,7 +15,7 @@ Use this when behavior must NOT change. Delete these comments after filling.
 | 🚦 **Risk** | 🟢 Low |
 | 🔗 **Closes** | # |
 
-> [!TIP]
+> [!NOTE]
 > **TL;DR** — _What was restructured or sped up, and the guarantee that external behavior is
 > unchanged (or the exact measurable improvement)._
 

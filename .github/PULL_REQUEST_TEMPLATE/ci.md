@@ -16,7 +16,7 @@ Delete these comments after filling.
 | 🛡️ **Affects `main` protection** | No / Yes |
 | 🔗 **Closes** | # |
 
-> [!TIP]
+> [!NOTE]
 > **TL;DR** — _What the pipeline does differently now, and what a contributor or release
 > manager will notice._
 

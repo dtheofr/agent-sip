@@ -16,7 +16,7 @@ Delete these comments after filling.
 | 🚦 **Runtime impact** | None / _describe_ |
 | 🔗 **Closes** | # |
 
-> [!TIP]
+> [!NOTE]
 > **TL;DR** — _What housekeeping was done and why it is safe._
 
 ---

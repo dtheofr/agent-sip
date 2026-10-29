@@ -15,7 +15,7 @@ code docstrings. Delete these comments after filling.
 | 📂 **Files** | `README.md` · `docs/…` · `CONTRIBUTING.md` · docstrings |
 | 🔗 **Closes** | # |
 
-> [!TIP]
+> [!NOTE]
 > **TL;DR** — _Which document changed and what a reader now understands that they did not
 > before._
 

@@ -11,7 +11,7 @@ If you are an agent filling this in: choose the single best-matching template, o
 
 # 🧵 Choose a pull request template
 
-> [!TIP]
+> [!NOTE]
 > **TL;DR** — Pick the template that matches the **kind of work**, not the file you touched.
 > Each one keeps the top of the PR skimmable for a reviewer who lacks context, with the
 > long-form detail collapsed below.

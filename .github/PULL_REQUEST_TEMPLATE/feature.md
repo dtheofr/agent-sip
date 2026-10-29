@@ -16,7 +16,7 @@ Keep the TL;DR to 1-3 plain-language sentences: what a user can now do, and what
 | 💥 **Breaking change** | No |
 | 🔗 **Closes** | # |
 
-> [!TIP]
+> [!NOTE]
 > **TL;DR** — _One to three sentences a reviewer can read cold: what the caller/user can now
 > do, what was added, and whether it is on by default._
 

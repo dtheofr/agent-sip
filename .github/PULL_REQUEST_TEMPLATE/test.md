@@ -14,7 +14,7 @@ Use this for test-only changes. Delete these comments after filling.
 | 🏭 **Production code changed** | No |
 | 🔗 **Closes** | # |
 
-> [!TIP]
+> [!NOTE]
 > **TL;DR** — _Which behavior is now covered, and what bug or gap motivated the new tests._
 
 ---

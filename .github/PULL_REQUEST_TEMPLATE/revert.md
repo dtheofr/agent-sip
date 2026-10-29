@@ -14,7 +14,7 @@ Use this to undo a previously merged change. Delete these comments after filling
 | 🚨 **Urgency** | 🔥 Immediate (production impact) · 🧊 Normal |
 | 🔗 **Closes** | # |
 
-> [!TIP]
+> [!NOTE]
 > **TL;DR** — _Which change is being backed out and the reason, in one or two sentences._
 
 ---
