@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-29
+
+### Changed
+
+- Releases are now created automatically after CI succeeds on `main` when `__version__` is a
+  new stable version. The workflow builds the distribution, creates the GitHub Release,
+  attaches the artifacts and deploys that commit.
+
 ### Added
 
 - Project hygiene for open-source collaboration: Apache-2.0 license, contributing and
