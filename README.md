@@ -34,8 +34,10 @@ the phone/ATA's SIP proxy/dial plan at this machine.
 
 The package version is defined once in `src/agent_sip/__init__.py` (`__version__`) and read
 dynamically by `pyproject.toml`; `agent-sip --version` prints it. Releases follow
-[Semantic Versioning](https://semver.org/) and are published as GitHub Releases tagged
-`vX.Y.Z`; publishing a release attaches the built distribution and deploys that tag.
+[Semantic Versioning](https://semver.org/). To release, move the changelog entries to the
+new version, bump `__version__` to a stable `X.Y.Z`, and push to `main`. Once CI passes, the
+release workflow creates the `vX.Y.Z` tag and GitHub Release, attaches the built distribution
+and deploys that commit. Development versions (`.dev`, pre-releases) are skipped.
 User-visible changes are recorded in `CHANGELOG.md`.
 
 ## Configuration

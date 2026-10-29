@@ -1,45 +1,109 @@
 name: Release
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: write
 
-# Publishing a GitHub Release verifies the tag, builds and attaches the distribution,
-# then deploys the release commit to the server. The deploy job only runs when the
-# release build succeeds.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+# After CI succeeds on main, release only when __version__ is a new stable version.
+# The release is created here (not via the release event) because a release created
+# with GITHUB_TOKEN does not trigger another workflow run.
 jobs:
-  build:
-    name: Build and attach
+  check:
+    name: Check version
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check for a new stable version
+        id: check
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          source = Path("src/agent_sip/__init__.py").read_text()
+          match = re.search(r'^__version__ = "([^"]+)"$', source, re.MULTILINE)
+          if match is None:
+              raise SystemExit("could not read __version__")
+
+          version = match.group(1)
+          tag = f"v{version}"
+          should_release = "false"
+
+          if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+              print(f"{version} is not a stable release version; skipping")
+          else:
+              result = subprocess.run(
+                  ["git", "ls-remote", "--tags", "origin", f"refs/tags/{tag}"],
+                  check=True, capture_output=True, text=True,
+              )
+              if result.stdout.strip():
+                  print(f"tag {tag} already exists; skipping")
+              else:
+                  changelog = Path("CHANGELOG.md").read_text()
+                  if f"## [{version}]" not in changelog:
+                      raise SystemExit(f"CHANGELOG.md has no section for [{version}]")
+                  should_release = "true"
+                  print(f"will release {tag}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"should_release={should_release}\n")
+              out.write(f"version={version}\n")
+              out.write(f"tag={tag}\n")
+          PY
+
+  build:
+    name: Build and release
+    needs: check
+    if: needs.check.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
+      VERSION: ${{ needs.check.outputs.version }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Verify release tag matches package version
-        env:
-          TAG: ${{ github.event.release.tag_name }}
+      - name: Verify version matches the release tag
         run: |
           python - <<'PY'
           import os
           import re
           from pathlib import Path
 
-          tag = os.environ["TAG"]
           source = Path("src/agent_sip/__init__.py").read_text()
           match = re.search(r'^__version__ = "([^"]+)"$', source, re.MULTILINE)
           if match is None:
               raise SystemExit("could not read __version__")
           expected = f"v{match.group(1)}"
-          if tag != expected:
-              raise SystemExit(f"release tag {tag!r} does not match package version {expected!r}")
+          if expected != os.environ["TAG"]:
+              raise SystemExit(f"tag {os.environ['TAG']!r} does not match {expected!r}")
           PY
 
       - name: Build distribution
@@ -47,12 +111,37 @@ jobs:
           python -m pip install --upgrade build
           python -m build
 
-      - name: Attach distribution to the release
+      - name: Extract release notes
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          lines = Path("CHANGELOG.md").read_text().splitlines()
+          start = next(
+              (i + 1 for i, line in enumerate(lines) if line.startswith(f"## [{version}]")),
+              None,
+          )
+          if start is None:
+              raise SystemExit(f"CHANGELOG.md has no section for [{version}]")
+
+          end = next(
+              (i for i in range(start, len(lines)) if lines[i].startswith("## [")),
+              len(lines),
+          )
+          notes = "\n".join(lines[start:end]).strip() or f"Release {version}."
+          Path("release-notes.md").write_text(notes + "\n")
+          PY
+
+      - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
         run: |
-          gh release upload "$TAG" dist/* --clobber
+          gh release create "$TAG" dist/* \
+            --target "$SHA" \
+            --title "agent-sip $TAG" \
+            --notes-file release-notes.md
 
   deploy:
     name: Deploy
@@ -64,7 +153,7 @@ jobs:
     env:
       DEPLOY_TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      DEPLOY_SHA: ${{ github.sha }}
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
       # Server prerequisites (one-time):
       #   - a clone of this repo at $DEPLOY_PATH (deploy key or https token), with
