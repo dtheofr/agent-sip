@@ -44,8 +44,21 @@ SIP feature completeness.
 - Features: use plan mode; the approved plan becomes the PR description. Multi-PR work
   is tracked in a GitHub issue checklist.
 - Conventional Commits (`feat(sip): …`, `fix(reminders): …`), one logical change per PR.
-  Fill the matching `.github/PULL_REQUEST_TEMPLATE/*.md`.
 - User-visible change → `CHANGELOG.md` under `[Unreleased]`.
+
+## Pull requests
+- The API does not apply templates: read `.github/pull_request_template.md` (or
+  `.github/PULL_REQUEST_TEMPLATE/release.md` for a release) and fill it. Delete every
+  comment and every section that does not apply.
+- The maintainer reviews on a phone: summary first, plain prose, no emojis, no wide
+  tables, about 300 words outside the plan.
+- Never claim a check you did not run. From a cloud session the phone line is always
+  `NOT DONE, maintainer to check: …` with what to dial and what to expect.
+- Fix: give the root cause and whether the new test fails without the fix. Refactor:
+  say how you know behaviour is preserved.
+- Plan mode: paste the approved plan verbatim in the `Approved plan` block and list any
+  deviation under `Changes`.
+- `Closes #N` on its own line so GitHub links and closes the issue.
 
 ## Versioning and release
 - SemVer. `__version__` in `src/agent_sip/__init__.py` is the only version;
@@ -56,7 +69,8 @@ SIP feature completeness.
 - Pick the bump from `[Unreleased]` (pre-1.0): any `feat` or breaking change → minor,
   only fixes → patch. Release when `[Unreleased]` holds a coherent set of changes and
   `make check` is green on `main`.
-- Release PR: move `[Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`, bump `__version__`.
+- Release PR (template `release.md`): move `[Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`,
+  bump `__version__`, paste the CHANGELOG section and justify the bump in the PR body.
   `.dev`/pre-release versions are skipped by the workflow; every stable version needs a
   `CHANGELOG.md` section.
 
