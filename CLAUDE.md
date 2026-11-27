@@ -42,6 +42,11 @@ SIP feature completeness.
 
 ## Workflow
 Work runs autonomously; the maintainer's checkpoint is the PR review.
+`.github/workflows/claude.yml` starts Claude (GitHub Actions) when the maintainer opens an
+issue (forms in `.github/ISSUE_TEMPLATE/`, or a blank one-liner), replies on an open issue,
+reviews a PR Claude opened, or writes `@claude` on any PR. Nobody else can trigger it; the
+`no-claude` label opts an issue out. That run has no human in the loop: when it must wait,
+it comments and stops, and the next maintainer reply resumes it from the issue.
 1. A GitHub issue is the unit of work. The maintainer writes it (often one line), or
    Claude opens one for a bug or follow-up it finds but does not fix now.
 2. Before coding, comment a short plan on the issue: approach, PR breakdown, risks.

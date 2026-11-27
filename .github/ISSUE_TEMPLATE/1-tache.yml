@@ -1,0 +1,44 @@
+name: Tâche
+description: Une évolution ou un changement à faire. Claude commente un plan puis ouvre une PR.
+title: ""
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Seul le champ « Quoi » est obligatoire ; une ligne suffit. Claude lit l'issue,
+        commente un plan et ouvre une PR, ou pose sa question ici si le changement est dans
+        la liste « Ask first » de CLAUDE.md. Répondre sur l'issue le relance. Ajouter le label
+        `no-claude` pour qu'il n'intervienne pas.
+  - type: textarea
+    id: quoi
+    attributes:
+      label: Quoi
+      description: Ce qui doit changer, vu du téléphone si possible.
+      placeholder: "Ex. : dire l'heure quand on décroche sans parler pendant 5 s."
+    validations:
+      required: true
+  - type: textarea
+    id: pourquoi
+    attributes:
+      label: Pourquoi
+      description: Le besoin ou la gêne derrière la demande. Aide à trancher les détails.
+    validations:
+      required: false
+  - type: textarea
+    id: fini
+    attributes:
+      label: Fini quand
+      description: "Le critère de « fini » : ce qu'on doit entendre ou voir, le test attendu."
+      placeholder: "Ex. : en décrochant sans parler, on entend l'heure ; un test le couvre."
+    validations:
+      required: false
+  - type: textarea
+    id: contraintes
+    attributes:
+      label: Contraintes
+      description: >-
+        Ce qu'il ne faut pas toucher, une piste imposée, un découpage en PR souhaité, ou
+        « demande-moi d'abord ». Rien = Claude applique CLAUDE.md.
+    validations:
+      required: false

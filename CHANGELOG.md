@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Claude Code runs in GitHub Actions on the maintainer's issues and PR reviews: it comments
+  a plan, then opens a pull request, or asks first when CLAUDE.md requires it. Only the
+  repository owner can trigger it.
+
 ### Changed
+
+- Issue forms rewritten in French for this workflow (task and bug), with a single required
+  field; blank issues are allowed again.
 
 - Pull request templates are consolidated into one default template and a release
   template, replacing the eight type-specific ones.
