@@ -1,16 +1,24 @@
-<!-- Title: chore(release): X.Y.Z -->
+<!-- Titre : chore(release): X.Y.Z -->
 
-## Release X.Y.Z
+## 📦 Version X.Y.Z
 
-Bump: <!-- minor | patch --> because <!-- feat or breaking change present -> minor;
-fixes only -> patch -->
+**Bump** : <!-- minor | patch --> parce que <!-- feat ou changement cassant → minor ;
+uniquement des correctifs → patch -->
 
-Included since vA.B.C: <!-- list of #PRs -->
+**PR incluses depuis vA.B.C** : <!-- liste des #PR -->
 
-<!-- Paste the new CHANGELOG section here. -->
+---
 
-- [ ] `[Unreleased]` moved to `## [X.Y.Z] - YYYY-MM-DD`, empty `[Unreleased]` kept
-- [ ] `__version__ = "X.Y.Z"` is the only change outside `CHANGELOG.md`
-- [ ] CI green on `main` at the base commit
+## 📝 Changelog
 
-Merging creates the GitHub Release and deploys to the server.
+<!-- Coller ici la nouvelle section du CHANGELOG. -->
+
+---
+
+## ✅ Vérifications
+
+- [ ] `[Unreleased]` déplacé vers `## [X.Y.Z] - AAAA-MM-JJ`, `[Unreleased]` vide conservé
+- [ ] `__version__ = "X.Y.Z"` est le seul changement hors de `CHANGELOG.md`
+- [ ] CI verte sur `main` au commit de base
+
+> La fusion crée la GitHub Release et déploie sur le serveur.

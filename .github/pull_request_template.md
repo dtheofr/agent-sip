@@ -1,44 +1,57 @@
-<!-- Title: Conventional Commit, e.g. `fix(sip): retransmit 200 OK until ACK`.
-     Keep it short. Delete every comment and any section that does not apply. -->
+<!-- Titre en anglais, format Conventional Commit : `fix(sip): retransmit 200 OK until ACK`.
+     Supprimer les commentaires et toute section qui ne s'applique pas. -->
 
-## Summary
+## 🧭 Résumé
 
-<!-- 1-3 plain sentences: what changes for the person on the phone (or "no user-visible
-     change") and why. Bug fix: symptom -> root cause -> fix. -->
+<!-- 1 à 3 phrases : ce qui change pour la personne au téléphone (ou « aucun changement
+     visible ») et pourquoi. Correctif : symptôme → cause racine → correction. -->
 
 Closes #
 
-## Changes
+---
 
-<!-- Bullets, most important first. Name files only when it helps the review. -->
+## 🔧 Changements
+
+<!-- Puces, du plus important au moins important. Citer un fichier seulement si ça aide
+     la relecture. -->
 
 -
 
-## Review focus
+---
 
-<!-- Where to look first and what could break (SIP/RTP state, concurrency, event-loop
-     blocking, DB schema, config defaults). "Mechanical change" is a valid answer. -->
+## 🔍 Où regarder
 
-## Verification
+<!-- Par où commencer, et ce qui pourrait casser (état SIP/RTP, concurrence, blocage de
+     la boucle asyncio, schéma DB, valeurs par défaut). « Changement mécanique » est une
+     réponse valable. -->
 
-- `make check`: <!-- passed locally / CI only -->
-- Tests: <!-- added or changed; for a fix, does the new test fail without the fix? If no
-  test, say why. -->
-- Phone: <!-- not needed | NOT DONE, maintainer to check: dial ..., expect ... | done: ... -->
+---
 
-## Notes
+## 🧪 Vérification
 
-<!-- Only what applies, else delete the section:
-     - Breaking or behavior change (refactor: "none intended" + how you know)
-     - New or changed config key (dataclass + config.example.toml)
-     - CHANGELOG: entry under [Unreleased], or "not user-visible"
-     - Rollback beyond a plain revert: a revert only reaches the server with the next
-       release; data or config written by this change stays
-     - Follow-ups -->
+- **`make check`** : <!-- passé en local / CI uniquement -->
+- **Tests** : <!-- ajoutés ou modifiés ; pour un correctif, le test échoue-t-il sans la
+  correction ? Sinon, pourquoi aucun test. -->
+- **Téléphone** : <!-- pas nécessaire | NON FAIT, à vérifier : composer …, attendu … | fait : … -->
+
+---
+
+## ⚠️ À savoir
+
+<!-- Uniquement ce qui s'applique, sinon supprimer la section :
+     - changement de comportement ou cassant (refactor : « aucun prévu » + comment on le sait)
+     - clé de config ajoutée ou modifiée (dataclass + config.example.toml)
+     - CHANGELOG : entrée sous [Unreleased], ou « pas visible »
+     - retour arrière : un revert n'atteint le serveur qu'à la release suivante ;
+       données ou config écrites par ce changement
+     - suites à prévoir -->
+
+---
 
 <details>
-<summary>Approved plan</summary>
+<summary>📋 Plan validé</summary>
 
-<!-- Plan-mode plan, verbatim. Note any deviation under "Changes". Delete if none. -->
+<!-- Plan du plan mode, tel quel. Signaler les écarts dans « Changements ».
+     Supprimer le bloc s'il n'y a pas de plan. -->
 
 </details>

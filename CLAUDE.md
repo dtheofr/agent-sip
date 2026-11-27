@@ -50,10 +50,12 @@ SIP feature completeness.
 - The API does not apply templates: read `.github/pull_request_template.md` (or
   `.github/PULL_REQUEST_TEMPLATE/release.md` for a release) and fill it. Delete every
   comment and every section that does not apply.
-- The maintainer reviews on a phone: summary first, plain prose, no emojis, no wide
-  tables, about 300 words outside the plan.
+- PR title in English (Conventional Commit); PR body in French, like the templates.
+- The maintainer reviews on a phone: summary first, plain prose, no wide tables, about
+  300 words outside the plan. One emoji per section heading (as in the template), none
+  in the text.
 - Never claim a check you did not run. From a cloud session the phone line is always
-  `NOT DONE, maintainer to check: …` with what to dial and what to expect.
+  `NON FAIT, à vérifier : …` with what to dial and what to expect.
 - Fix: give the root cause and whether the new test fails without the fix. Refactor:
   say how you know behaviour is preserved.
 - Plan mode: paste the approved plan verbatim in the `Approved plan` block and list any
