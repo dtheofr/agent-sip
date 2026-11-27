@@ -1,4 +1,4 @@
-"""Tests for the reminder tools, per-call wiring and validation (Slice 3)."""
+"""Tests for the reminder tools, per-call wiring and validation."""
 import asyncio
 import json
 import tempfile

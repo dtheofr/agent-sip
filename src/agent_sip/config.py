@@ -111,7 +111,7 @@ class WebToolsConfig:
 
 @dataclass
 class RemindersConfig:
-    """Reminder tools + scheduler (see docs/reminders-plan.md)."""
+    """Reminder tools + scheduler (see ``agent_sip.reminders``)."""
     enabled: bool = True              # register tools + start scheduler
     timezone: str = ""                # IANA name; empty = system local
     default_phone: str = ""           # fallback; empty = first [[phones]] entry

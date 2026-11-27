@@ -1,10 +1,12 @@
 PY ?= python3
 VENV ?= .venv
 BIN := $(VENV)/bin
+# ruff from the venv when installed, else from PATH (CI, quick checks)
+RUFF ?= $(if $(wildcard $(BIN)/ruff),$(BIN)/ruff,ruff)
 
 SILERO_URL ?= https://github.com/snakers4/silero-vad/raw/v5.1.2/src/silero_vad/data/silero_vad.onnx
 
-.PHONY: help install run test lint clean
+.PHONY: help install run test lint fmt check cov clean
 
 help:  ## Show this help
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -29,8 +31,18 @@ run: install config.toml  ## Start the SIP server (waits for a handset pickup)
 test:  ## Run unit tests (no install needed)
 	PYTHONPATH=src $(PY) -m unittest discover -s tests -v
 
-lint: install  ## Run ruff
-	$(BIN)/ruff check src tests
+lint:  ## Run ruff (no install needed if ruff is on PATH)
+	$(RUFF) check src tests
+
+fmt:  ## Auto-fix lint findings and format the code
+	$(RUFF) check --fix src tests
+	$(RUFF) format src tests
+
+check: lint test  ## Lint + tests: run before every commit
+
+cov:  ## Run tests under coverage and print the report
+	PYTHONPATH=src $(PY) -m coverage run --source=src -m unittest discover -s tests -q
+	$(PY) -m coverage report --skip-covered --sort=cover
 
 clean:  ## Remove venv and caches
 	rm -rf $(VENV) build *.egg-info src/*.egg-info

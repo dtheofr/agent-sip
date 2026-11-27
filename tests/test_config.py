@@ -1,11 +1,14 @@
+import dataclasses
 import os
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
 from agent_sip.config import (
     Config,
     DbConfig,
+    PhoneConfig,
     RemindersConfig,
     ToolsConfig,
     WebToolsConfig,
@@ -184,6 +187,29 @@ class ExampleConfig(unittest.TestCase):
         self.assertEqual(cfg.db.path, "data/agent-sip.db")
         self.assertIs(cfg.tools.reminders.enabled, True)
         self.assertEqual(cfg.tools.reminders.timezone, "")
+
+    def test_example_documents_every_key(self):
+        """Every config dataclass field must appear in config.example.toml."""
+        data = tomllib.loads(EXAMPLE.read_text())
+
+        def missing(cls, table, path):
+            out = []
+            for f in dataclasses.fields(cls):
+                where = f"{path}.{f.name}" if path else f.name
+                if f.name not in table:
+                    out.append(where)
+                elif isinstance(f.type, type) and dataclasses.is_dataclass(f.type):
+                    out += missing(f.type, table[f.name], where)
+            return out
+
+        absent = [k for k in missing(Config, data, "") if k != "phones"]
+        for i, phone in enumerate(data.get("phones", [])):
+            absent += [
+                f"phones[{i}].{f.name}"
+                for f in dataclasses.fields(PhoneConfig)
+                if f.name not in phone
+            ]
+        self.assertEqual(absent, [], "add these keys to config.example.toml")
 
 
 if __name__ == "__main__":

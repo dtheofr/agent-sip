@@ -107,7 +107,7 @@ _Revert this PR. Note any published tags, releases, or deployments that need man
 - [ ] Branch-protection required check names considered
 - [ ] New secrets documented (and added by the maintainer)
 - [ ] `CHANGELOG.md` updated under `[Unreleased]` for user-visible changes
-- [ ] `AGENTS.md` release notes updated if the process changed
+- [ ] `CLAUDE.md` release notes updated if the process changed
 
 ---
 
