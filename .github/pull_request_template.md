@@ -7,6 +7,7 @@
      visible ») et pourquoi. Correctif : symptôme → cause racine → correction. -->
 
 Closes #
+<!-- ou « Part of #N » pour une étape intermédiaire d'un chantier multi-PR -->
 
 ---
 
@@ -49,9 +50,9 @@ Closes #
 ---
 
 <details>
-<summary>📋 Plan validé</summary>
+<summary>📋 Plan</summary>
 
-<!-- Plan du plan mode, tel quel. Signaler les écarts dans « Changements ».
-     Supprimer le bloc s'il n'y a pas de plan. -->
+<!-- Lien vers le commentaire de plan sur l'issue, ou le plan lui-même s'il n'y a pas
+     d'issue. Signaler les écarts dans « Changements ». Supprimer le bloc si sans objet. -->
 
 </details>

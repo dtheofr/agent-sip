@@ -41,10 +41,28 @@ SIP feature completeness.
 - Add a test, and a line in `prompts/system.md` if the model needs guidance.
 
 ## Workflow
-- Features: use plan mode; the approved plan becomes the PR description. Multi-PR work
-  is tracked in a GitHub issue checklist.
-- Conventional Commits (`feat(sip): …`, `fix(reminders): …`), one logical change per PR.
-- User-visible change → `CHANGELOG.md` under `[Unreleased]`.
+Work runs autonomously; the maintainer's checkpoint is the PR review.
+1. A GitHub issue is the unit of work. The maintainer writes it (often one line), or
+   Claude opens one for a bug or follow-up it finds but does not fix now.
+2. Before coding, comment a short plan on the issue: approach, PR breakdown, risks.
+   Then proceed without waiting, unless the change is in the ask-first list below:
+   in that case wait for the maintainer's answer on the issue.
+3. One logical change per PR. Multi-PR work: keep a checklist in the issue, tick it as
+   PRs merge, and put `Closes #N` on the last PR only (`Part of #N` on the others).
+   The issue, not session memory, is where the next session picks up.
+4. The PR review is the gate: address review comments, never merge your own PR.
+5. Releases follow "Versioning and release" below.
+
+Ask first (comment on the issue and wait) when the change:
+- adds or edits a DB migration;
+- changes SIP/RTP behaviour as seen by the ATA (messages, timers, codecs);
+- adds a dependency, even optional;
+- changes a config default or removes a config key;
+- removes a feature or a tool the agent can call;
+- or when the request is ambiguous enough that two reasonable readings differ.
+
+Conventional Commits (`feat(sip): …`, `fix(reminders): …`). User-visible change →
+`CHANGELOG.md` under `[Unreleased]`.
 
 ## Pull requests
 - The API does not apply templates: read `.github/pull_request_template.md` (or
@@ -58,9 +76,9 @@ SIP feature completeness.
   `NON FAIT, à vérifier : …` with what to dial and what to expect.
 - Fix: give the root cause and whether the new test fails without the fix. Refactor:
   say how you know behaviour is preserved.
-- Plan mode: paste the approved plan verbatim in the `Approved plan` block and list any
-  deviation under `Changes`.
-- `Closes #N` on its own line so GitHub links and closes the issue.
+- `📋 Plan` block: link the plan comment on the issue (or paste the plan when there is
+  no issue) and list any deviation under `Changements`.
+- `Closes #N` (or `Part of #N`) on its own line so GitHub links and closes the issue.
 
 ## Versioning and release
 - SemVer. `__version__` in `src/agent_sip/__init__.py` is the only version;
