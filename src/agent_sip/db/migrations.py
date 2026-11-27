@@ -7,7 +7,7 @@ is simply a later list entry). Never reorder or edit an already-shipped entry.
 """
 
 MIGRATIONS: list[str] = [
-    # Migration 1: reminders table + due index (schema from docs/reminders-plan.md).
+    # Migration 1: reminders table + due index.
     """
 CREATE TABLE reminders (
   id           INTEGER PRIMARY KEY,

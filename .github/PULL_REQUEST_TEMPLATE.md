@@ -20,7 +20,7 @@ If you are an agent filling this in: choose the single best-matching template, o
 |---|---|---|
 | ✨ Feature | New capability or user-visible behavior (`feat:`) | [**Open feature template**](?template=feature.md&expand=1) |
 | 🐛 Bug fix | Something is broken (`fix:`) | [**Open bugfix template**](?template=bugfix.md&expand=1) |
-| 📚 Documentation | README, `docs/`, `AGENTS.md`, docstrings (`docs:`) | [**Open docs template**](?template=docs.md&expand=1) |
+| 📚 Documentation | README, `CLAUDE.md`, docstrings (`docs:`) | [**Open docs template**](?template=docs.md&expand=1) |
 | 🧹 Refactor / ⚡ performance | No behavior change intended (`refactor:`/`perf:`) | [**Open refactor template**](?template=refactor.md&expand=1) |
 | 🧪 Tests | Test-only changes (`test:`) | [**Open test template**](?template=test.md&expand=1) |
 | 🚦 CI / 📦 build / 🏷️ release | Workflows, packaging, release tooling (`ci:`/`build:`) | [**Open CI template**](?template=ci.md&expand=1) |

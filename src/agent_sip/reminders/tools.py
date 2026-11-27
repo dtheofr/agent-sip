@@ -9,8 +9,8 @@ bound to ``call.phone``.
 relative times with ``get_current_datetime`` first). They are interpreted in the
 configured timezone (empty = system local) and stored as UTC epoch seconds.
 
-The optional ``on_change`` callback fires after a successful create/update/delete. It is the
-hook Slice 5 uses to wake the scheduler; the tools never touch the scheduler directly.
+The optional ``on_change`` callback fires after a successful create/update/delete. The
+application wires it to wake the scheduler; the tools never touch the scheduler directly.
 """
 from __future__ import annotations
 

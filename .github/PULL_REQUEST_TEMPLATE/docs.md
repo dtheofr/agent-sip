@@ -2,7 +2,7 @@
 Template: 📚 Documentation
 Title format:  docs(<scope>): <imperative summary>
 Example:       docs(readme): describe the config file
-Use this for README, CONTRIBUTING, AGENTS.md, docs/*, config.example.toml comments and
+Use this for README, CONTRIBUTING, CLAUDE.md, .claude/rules, config.example.toml comments and
 code docstrings. Delete these comments after filling.
 -->
 
@@ -12,7 +12,7 @@ code docstrings. Delete these comments after filling.
 |---|---|
 | 📚 **Type** | Documentation (`docs:`) |
 | 🎯 **Audience** | 🧑‍💻 New users · 🛠️ Operators · 🤝 Contributors · 🔌 API consumers |
-| 📂 **Files** | `README.md` · `docs/…` · `CONTRIBUTING.md` · docstrings |
+| 📂 **Files** | `README.md` · `CLAUDE.md` · `CONTRIBUTING.md` · docstrings |
 | 🔗 **Closes** | # |
 
 > [!NOTE]
@@ -49,7 +49,7 @@ code docstrings. Delete these comments after filling.
 - [ ] Commands/paths/config keys verified against the repository
 - [ ] New keys exist in both the config dataclass and `config.example.toml`
 - [ ] No step depends on behavior that no longer exists
-- [ ] Versioning/release notes still consistent with `AGENTS.md`
+- [ ] Versioning/release notes still consistent with `CLAUDE.md`
 
 ---
 

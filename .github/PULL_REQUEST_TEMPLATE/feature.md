@@ -33,7 +33,7 @@ task. Avoid jargon or define it on first use._
 <summary>🧠 Context a reviewer without prior knowledge should have (expand)</summary>
 
 - _Why this matters now / what prompted it._
-- _Any related design notes in `docs/`, prior PRs, or issues._
+- _The approved plan, related issues or prior PRs._
 - _Relevant SIP/RTP/audio constraints (e.g. 8 kHz mono int16, UDP only, PCMU only)._
 
 </details>
@@ -52,7 +52,6 @@ task. Avoid jargon or define it on first use._
 |---|---|
 | `src/agent_sip/…` | _…_ |
 | `tests/…` | _…_ |
-| `docs/…` | _…_ |
 
 ---
 
@@ -139,4 +138,3 @@ Result: _e.g. 153 tests OK; ruff clean._
 ## 📎 References
 
 - 🔗 Related issue/PR: #
-- 📄 Design note: `docs/…`

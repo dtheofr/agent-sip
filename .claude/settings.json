@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make test)",
+      "Bash(make lint)",
+      "Bash(make check)",
+      "Bash(make fmt)",
+      "Bash(make cov)",
+      "Bash(PYTHONPATH=src python -m unittest:*)",
+      "Bash(PYTHONPATH=src python3 -m unittest:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./config.toml)",
+      "Read(./.env)",
+      "Read(./data/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ruff-format.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

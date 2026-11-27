@@ -1,4 +1,4 @@
-"""Scheduler + pickup-flow tests (Slice 5).
+"""Scheduler + pickup-flow tests.
 
 A fake server records ``originate`` calls and lets tests drive ``answered`` /
 ``ended``; the clock is injectable and intervals are tiny, so nothing here waits

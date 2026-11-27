@@ -2,7 +2,7 @@
 
 Thanks for your interest in improving agent-sip. This document explains how to set up the
 project, what we expect from a change, and how it gets merged. For a deeper tour of the
-architecture and conventions, read [`AGENTS.md`](AGENTS.md).
+architecture and conventions, read [`CLAUDE.md`](CLAUDE.md).
 
 ## Development setup
 
@@ -10,8 +10,11 @@ Requires Python ≥ 3.11 and `make`.
 
 ```sh
 make install   # create .venv, install the project with dev + VAD extras, fetch the Silero model
+make check     # lint + tests: run before every commit
 make test      # unit tests plus a loopback SIP call (no install needed: PYTHONPATH=src)
 make lint      # ruff, line length 100
+make fmt       # auto-fix and format
+make cov       # coverage report
 make run       # copy config.example.toml to config.toml and start the server
 ```
 
@@ -57,7 +60,7 @@ below.
 - `src/agent_sip/__init__.py` holds the single `__version__`; `pyproject.toml` reads it
   dynamically. Never edit the version in two places.
 - Releases follow [Semantic Versioning](https://semver.org/) and are published as GitHub
-  Releases tagged `vX.Y.Z`. See `AGENTS.md` for the release steps.
+  Releases tagged `vX.Y.Z`. See `CLAUDE.md` for the release steps.
 
 ## Reporting bugs and security issues
 

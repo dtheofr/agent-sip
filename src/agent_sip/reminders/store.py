@@ -1,7 +1,7 @@
 """Async persistence for reminders over a single SQLite connection.
 
 The SQL is synchronous; every public method wraps it in :func:`asyncio.to_thread`
-so the event loop is never blocked (AGENTS.md). Because one connection is shared
+so the event loop is never blocked (CLAUDE.md). Because one connection is shared
 by the worker threads, all access is serialised with a :class:`threading.Lock`.
 
 The store takes an already-open connection (opened via :func:`agent_sip.db.connect`

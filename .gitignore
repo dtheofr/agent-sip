@@ -5,5 +5,8 @@ recordings/
 config.toml
 .env
 models/
-docs/
 data/
+.coverage
+htmlcov/
+.ruff_cache/
+.claude/settings.local.json
