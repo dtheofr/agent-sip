@@ -28,11 +28,6 @@ on:
 
 permissions: {}
 
-# One run at a time per issue or PR; a new event queues behind the running one.
-concurrency:
-  group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
-  cancel-in-progress: false
-
 jobs:
   claude:
     name: Claude
@@ -70,6 +65,12 @@ jobs:
           contains(github.event.comment.body, '@claude')
         )
       )
+    # One run at a time per issue or PR; a new event queues behind the running one.
+    # Job-level, so events the `if` skips (Claude's own comments) never take the queue slot:
+    # GitHub keeps one pending run per group and would cancel a queued maintainer reply.
+    concurrency:
+      group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -84,6 +85,9 @@ jobs:
           # Review events default to the PR merge ref; work on the PR branch instead.
           ref: ${{ github.event.pull_request.head.ref || '' }}
           fetch-depth: 0
+          # Do not leave GITHUB_TOKEN (read-only here) in the git config: it would win over
+          # the Claude GitHub App token the action sets, and `git push` would get a 403.
+          persist-credentials: false
 
       # Same toolchain as ci.yml, so `make check` and the ruff hook in
       # .claude/settings.json work in the session.
@@ -103,6 +107,7 @@ jobs:
             ${{ (github.event.pull_request.user.login == 'claude[bot]' ||
             github.event.issue.user.login == 'claude[bot]') && 'false' || 'true' }}
           claude_args: >-
+            --model opus
             --allowedTools
             "Bash(make check),Bash(make test),Bash(make lint),Bash(make fmt),Bash(git:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr diff:*),Bash(gh pr checks:*),Bash(gh pr checkout:*),Bash(gh pr create:*),Bash(gh pr edit:*),Bash(gh pr comment:*),Bash(gh run view:*),Bash(gh api repos/dtheofr/agent-sip/pulls/:*)"
             --disallowedTools
