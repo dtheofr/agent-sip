@@ -49,11 +49,10 @@ chore(release): prepare 0.9.0
 
 Keep pull requests focused. One logical change per PR is easier to review and revert.
 
-When you open the PR, choose the template that matches the **kind of work** — feature, bug
-fix, docs, refactor/performance, tests, CI/build/release, chore/dependencies, or revert. Each
-template keeps the top of the description skimmable for a reviewer who lacks context and
-asks for the details (root cause, risk, verification, how to review) in collapsible sections
-below.
+GitHub fills the PR description from `.github/pull_request_template.md`: a short summary,
+the changes, where to look, and what was (or was not) verified. Delete what does not apply.
+Release PRs (`chore(release): X.Y.Z`) use `.github/PULL_REQUEST_TEMPLATE/release.md`
+(open the PR with `?template=release.md`).
 
 ## Versioning and releases
 

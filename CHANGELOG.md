@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Pull request templates are consolidated into one default template and a release
+  template, replacing the eight type-specific ones.
+
 ## [0.8.1] - 2026-10-29
 
 ### Changed
