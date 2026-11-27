@@ -1,0 +1,123 @@
+name: Claude
+
+# Runs Claude Code (anthropics/claude-code-action, automation mode) on the issue-driven
+# workflow described in CLAUDE.md:
+#   - a new issue from the maintainer: comment a plan, then implement and open a PR
+#     (or stop and wait when the change is in the "Ask first" list);
+#   - a maintainer reply on an open issue: continue where the issue left off;
+#   - a review (or an `@claude` mention) from the maintainer on a PR: address it.
+#
+# Security: the repository is public, so only the owner can start a run. Every event is
+# gated on `github.actor` AND the author association of the triggering text; anyone else
+# (and any bot, including claude[bot] itself) starts nothing. The prompt only carries
+# numbers and ids, never issue or comment text. The only secret referenced is the Claude
+# token: no DEPLOY_* secret reaches this job.
+#
+# GitHub access uses the Claude GitHub App (OIDC exchange, hence `id-token: write`), so the
+# branches and PRs Claude pushes trigger ci.yml, unlike pushes made with GITHUB_TOKEN.
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  pull_request_review_comment:
+    types: [created]
+
+permissions: {}
+
+# One run at a time per issue or PR; a new event queues behind the running one.
+concurrency:
+  group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  claude:
+    name: Claude
+    # Add the `no-claude` label to an issue to keep Claude away from it.
+    if: >-
+      github.actor == 'dtheofr' && (
+        (
+          github.event_name == 'issues' &&
+          github.event.issue.author_association == 'OWNER' &&
+          !contains(github.event.issue.labels.*.name, 'no-claude')
+        ) || (
+          github.event_name == 'issue_comment' &&
+          github.event.comment.author_association == 'OWNER' &&
+          github.event.issue.state == 'open' &&
+          !contains(github.event.issue.labels.*.name, 'no-claude') &&
+          (
+            !github.event.issue.pull_request ||
+            github.event.issue.user.login == 'claude[bot]' ||
+            contains(github.event.comment.body, '@claude')
+          )
+        ) || (
+          github.event_name == 'pull_request_review' &&
+          github.event.review.author_association == 'OWNER' &&
+          github.event.review.state != 'approved' &&
+          github.event.pull_request.state == 'open' &&
+          (
+            github.event.pull_request.user.login == 'claude[bot]' ||
+            contains(github.event.review.body, '@claude')
+          )
+        ) || (
+          github.event_name == 'pull_request_review_comment' &&
+          github.event.comment.author_association == 'OWNER' &&
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.user.login != 'claude[bot]' &&
+          contains(github.event.comment.body, '@claude')
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read # checkout; Claude writes through the GitHub App token
+      issues: read
+      pull-requests: read
+      actions: read # lets Claude read CI results on PRs
+      id-token: write # exchanged for the Claude GitHub App token
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Review events default to the PR merge ref; work on the PR branch instead.
+          ref: ${{ github.event.pull_request.head.ref || '' }}
+          fetch-depth: 0
+
+      # Same toolchain as ci.yml, so `make check` and the ruff hook in
+      # .claude/settings.json work in the session.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install ruff==0.17.1
+
+      - uses: anthropics/claude-code-action@4411a9e9b0283becf4b924f7bce360fd7756c78c # v1.0.290
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Claude's own PRs are opened by a bot, which the action treats as an untrusted
+          # author and would forbid `make check` on. Keep that protection for every other PR.
+          restrict_untrusted_prs: >-
+            ${{ (github.event.pull_request.user.login == 'claude[bot]' ||
+            github.event.issue.user.login == 'claude[bot]') && 'false' || 'true' }}
+          claude_args: >-
+            --allowedTools
+            "Bash(make check),Bash(make test),Bash(make lint),Bash(make fmt),Bash(git:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr diff:*),Bash(gh pr checks:*),Bash(gh pr checkout:*),Bash(gh pr create:*),Bash(gh pr edit:*),Bash(gh pr comment:*),Bash(gh run view:*),Bash(gh api repos/dtheofr/agent-sip/pulls/:*)"
+            --disallowedTools
+            "Bash(gh pr merge:*),Bash(gh pr review:*),Bash(gh release:*),Bash(gh secret:*),Bash(gh workflow:*),Bash(git push --force:*),Bash(git push -f:*),Bash(git push origin main:*)"
+          # The instructions live in .claude/skills/issue-workflow/SKILL.md, so they are
+          # edited through a reviewed PR. On PR events the action restores .claude/ from
+          # main, so a PR cannot change the prompt that handles it. Only the event context,
+          # which needs workflow expressions, stays here.
+          prompt: |
+            Use the `issue-workflow` skill (if the Skill tool is unavailable, read
+            .claude/skills/issue-workflow/SKILL.md) and follow it for this event in
+            ${{ github.repository }}:
+
+            Event: ${{ github.event_name }}
+            Issue or PR number: #${{ github.event.issue.number || github.event.pull_request.number }}
+            Is a pull request: ${{ github.event.issue.pull_request != null || github.event.pull_request != null }}
+            Triggering comment id: ${{ github.event.comment.id || 'none' }}
+            Triggering review id: ${{ github.event.review.id || 'none' }}

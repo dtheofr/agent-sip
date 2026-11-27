@@ -1,0 +1,40 @@
+name: Bug
+description: Quelque chose ne marche pas. Claude cherche la cause, ajoute un test et corrige.
+title: ""
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Seul le symptôme est obligatoire. Retirer tout secret des logs (clés d'API, mots de
+        passe SIP). Pour une faille de sécurité, ne pas ouvrir d'issue : voir SECURITY.md.
+  - type: textarea
+    id: symptome
+    attributes:
+      label: Symptôme
+      description: Ce qui se passe, et ce qui était attendu.
+      placeholder: "Ex. : l'appel coupe après 30 s, alors que l'agent parlait encore."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduire
+    attributes:
+      label: Pour reproduire
+      description: Ce qu'on a composé ou dit, à quel moment, à chaque fois ou parfois.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: La sortie du serveur autour du problème.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`agent-sip --version` ou le commit. Vide = la version déployée actuelle."
+    validations:
+      required: false

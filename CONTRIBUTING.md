@@ -63,7 +63,9 @@ Release PRs (`chore(release): X.Y.Z`) use `.github/PULL_REQUEST_TEMPLATE/release
 
 ## Reporting bugs and security issues
 
-- Bugs and feature requests: use the issue templates.
+- Bugs and feature requests: use the issue templates. Issues opened by the maintainer are
+  picked up by Claude (`.github/workflows/claude.yml`); issues from anyone else wait for the
+  maintainer and never start an automated run.
 - Security vulnerabilities: **do not** open a public issue — follow [`SECURITY.md`](SECURITY.md).
 
 By participating you agree to abide by the [Code of Conduct](.github/CODE_OF_CONDUCT.md).
