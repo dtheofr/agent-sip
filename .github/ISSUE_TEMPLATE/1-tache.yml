@@ -1,6 +1,5 @@
 name: Tâche
 description: Une évolution ou un changement à faire. Claude commente un plan puis ouvre une PR.
-title: ""
 labels: ["enhancement"]
 body:
   - type: markdown

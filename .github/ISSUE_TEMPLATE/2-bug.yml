@@ -1,6 +1,5 @@
 name: Bug
 description: Quelque chose ne marche pas. Claude cherche la cause, ajoute un test et corrige.
-title: ""
 labels: ["bug"]
 body:
   - type: markdown
